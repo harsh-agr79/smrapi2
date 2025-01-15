@@ -43,7 +43,8 @@ class CartController extends Controller
             if ($product) {
                 $basePrice = $product->price;
                 $offerPrice = $product->offer ?? $basePrice;  // Use offer if available, otherwise regular price
-    
+                $images = json_decode($product->images, true);
+                $product->images = is_array($images) ? implode('|', $images) : $product->images;
                 // Determine the price based on the variation
                 if (!empty($item['variation']) && isset($item['variation']['price'])) {
                     $variationPrice = $item['variation']['price'];
@@ -305,6 +306,8 @@ class CartController extends Controller
         // Add wishlist:true to each product
         $products->transform(function($product) {
             $product->wishlist = true;
+            $images = json_decode($product->images, true);
+            $product->images = is_array($images) ? implode('|', $images) : $product->images;
             return $product;
         });
 
