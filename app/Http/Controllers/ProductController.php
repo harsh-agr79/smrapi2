@@ -69,7 +69,7 @@ class ProductController extends Controller
     
         // Add the wishlist field to each product and decode variations
         $products->transform(function($product) use ($wishlistProductIds) {
-            $product->variations = json_decode($product->variations, true); // Decode JSON to associative array
+            $product->variations = json_decode(json_encode($product->variations), true); // Decode JSON to associative array
     
             // Check if the product is in the wishlist
             $product->wishlist = in_array($product->id, $wishlistProductIds);
@@ -183,7 +183,7 @@ class ProductController extends Controller
         // Execute the query and paginate the results
         $results = $query->paginate(20);
         $results->getCollection()->transform(function($product) use ($wishlistProductIds) {
-            $product->variations = json_decode($product->variations, true); // Decode JSON to associative array
+            $product->variations = json_decode(json_encode($product->variations), true); // Decode JSON to associative array
             $product->wishlist = in_array($product->id, $wishlistProductIds); // Add wishlist field
             $images = json_decode($product->images, true);
             $product->images = is_array($images) ? implode('|', $images) : $product->images;
@@ -214,7 +214,7 @@ class ProductController extends Controller
         }
     
         // Decode the product variations
-        $product->variations = json_decode($product->variations);
+        $product->variations = json_decode(json_encode($product->variations));
     
         $user = auth('sanctum')->user();
         $wishlistProductIds = [];
