@@ -86,18 +86,19 @@ class ProductResource extends Resource {
             Tables\Columns\TextColumn::make( 'name' )->label( 'Name' )->searchable(),
             Tables\Columns\TextColumn::make( 'price' )->label( 'Price' )->sortable(),
             Tables\Columns\BooleanColumn::make( 'featured' )->label( 'Featured' ),
-            Tables\Columns\BooleanColumn::make( 'new' )->label( 'Featured' ),
-            Tables\Columns\BooleanColumn::make( 'flash' )->label( 'Featured' ),
-            Tables\Columns\BooleanColumn::make( 'trending' )->label( 'Featured' ),
+            Tables\Columns\BooleanColumn::make( 'new' )->label( 'New' ),
+            Tables\Columns\BooleanColumn::make( 'flash' )->label( 'Flash' ),
+            Tables\Columns\BooleanColumn::make( 'trending' )->label( 'Trending' ),
+            Tables\Columns\BooleanColumn::make( 'stock' )->label( 'Stock' ),
             Tables\Columns\TextColumn::make( 'offer' )->label( 'Offer' ),
             Tables\Columns\ImageColumn::make( 'images' )->label( 'Images' ),
             Tables\Columns\TextColumn::make( 'ordernum' )->label( 'Order' )->sortable(),
         ] )
         ->filters( [
-            Tables\Filters\Filter::make( 'featured' )->toggle()->label( 'Featured' ),
-            Tables\Filters\Filter::make( 'offer' )->toggle()->label( 'Offer' ),
-            Tables\Filters\Filter::make( 'trending' )->toggle()->label( 'Trending' ),
-            Tables\Filters\Filter::make( 'new' )->toggle()->label( 'New Arrival' ),
+            // Tables\Filters\Filter::make( 'featured' )->toggle()->label( 'Featured' ),
+            // Tables\Filters\Filter::make( 'offer' )->toggle()->label( 'Offer' ),
+            // Tables\Filters\Filter::make( 'trending' )->toggle()->label( 'Trending' ),
+            // Tables\Filters\Filter::make( 'new' )->toggle()->label( 'New Arrival' ),
         ] )
         ->reorderable('ordernum')
         ->defaultSort('ordernum')
