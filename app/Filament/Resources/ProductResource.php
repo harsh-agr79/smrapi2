@@ -92,7 +92,9 @@ class ProductResource extends Resource {
             Tables\Columns\BooleanColumn::make('stock')
             ->label('Stock')
             ->trueIcon('heroicon-s-x-circle') // Icon for true value
-            ->falseIcon('heroicon-s-check-circle'), // Icon for false value
+            ->falseIcon('heroicon-s-check-circle')
+            ->trueColor('danger') // Optional: Color for true value
+            ->falseColor('success'), // Icon for false value
             Tables\Columns\TextColumn::make( 'offer' )->label( 'Offer' ),
             Tables\Columns\ImageColumn::make( 'images' )->label( 'Images' ),
             Tables\Columns\TextColumn::make( 'ordernum' )->label( 'Order' )->sortable(),
