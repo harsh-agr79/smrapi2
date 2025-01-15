@@ -57,7 +57,7 @@ class ProductController extends Controller
         $wishlistProductIds = [];
 
         if ($user && !empty($user->wishlist)) {
-                $wishlist = json_decode($user->wishlist, true);
+                $wishlist = json_decode(json_encode($user->wishlist), true);
                 if (is_array($wishlist)) {
                     // Extract the product_ids from the wishlist
                     $wishlistProductIds = array_column($wishlist, 'product_id');
@@ -173,7 +173,7 @@ class ProductController extends Controller
         $wishlistProductIds = [];
 
         if ($user && !empty($user->wishlist)) {
-            $wishlist = json_decode($user->wishlist, true);
+            $wishlist = json_decode(json_encode($user->wishlist), true);
             if (is_array($wishlist)) {
                 // Extract the product_ids from the wishlist
                 $wishlistProductIds = array_column($wishlist, 'product_id');
@@ -220,7 +220,7 @@ class ProductController extends Controller
         $wishlistProductIds = [];
 
         if ($user && !empty($user->wishlist)) {
-            $wishlist = json_decode($user->wishlist, true);
+            $wishlist = json_decode(json_encode($user->wishlist), true);
             if (is_array($wishlist)) {
                 // Extract the product_ids from the wishlist
                 $wishlistProductIds = array_column($wishlist, 'product_id');
