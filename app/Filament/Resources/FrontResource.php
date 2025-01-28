@@ -31,8 +31,9 @@ class FrontResource extends Resource
                 ->label('Image')
                 ->directory('docs')
                 ->image(),
-            Forms\Components\Hidden::make('type')
-                ->default('image'),
+                Forms\Components\Hidden::make('type')
+                ->default('image')
+                ->dehydrated(),
             ]);
     }
 
