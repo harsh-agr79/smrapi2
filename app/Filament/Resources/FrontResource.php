@@ -31,11 +31,8 @@ class FrontResource extends Resource
                 ->label('Image')
                 ->directory('docs')
                 ->image(),
-            Forms\Components\TextInput::make('type')
-                ->label('Type')
-                ->disabled()
-                ->default('image')
-                ->required(),
+            Forms\Components\Hidden::make('type')
+                ->default('image'),
             ]);
     }
 
