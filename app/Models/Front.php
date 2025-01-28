@@ -10,4 +10,8 @@ class Front extends Model
     use HasFactory;
 
     protected $fillable = ['image', 'type', 'message', 'ordernum', 'extra1'];
+
+    protected $attributes = [
+        'type' => 'image',
+    ];
 }
