@@ -15,13 +15,16 @@ use Image;
 class ProductController extends Controller
 {
     public function getproduct(Request $request) {
-        // Start the product query
+        // Start the product query with category and brand joins
         $query = DB::table('products')
-        ->orderBy('ordernum', 'ASC')
-        ->where(function($query) {
-            $query->where('hide', 0)
-                  ->orWhereNull('hide');
-        });
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+            ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
+            ->select('products.*', 'categories.category as category_name', 'brands.name as brand_name')
+            ->orderBy('ordernum', 'ASC')
+            ->where(function($query) {
+                $query->where('hide', 0)
+                      ->orWhereNull('hide');
+            });
     
         // Apply filters based on the request parameters
         if ($request->has('brand')) {
@@ -55,13 +58,13 @@ class ProductController extends Controller
         // Retrieve the authenticated user and their wishlist
         $user = auth('sanctum')->user();
         $wishlistProductIds = [];
-
+    
         if ($user && !empty($user->wishlist)) {
-                $wishlist = json_decode(json_encode($user->wishlist), true);
-                if (is_array($wishlist)) {
-                    // Extract the product_ids from the wishlist
-                    $wishlistProductIds = array_column($wishlist, 'product_id');
-                }
+            $wishlist = json_decode(json_encode($user->wishlist), true);
+            if (is_array($wishlist)) {
+                // Extract the product_ids from the wishlist
+                $wishlistProductIds = array_column($wishlist, 'product_id');
+            }
         }
     
         // Execute the query and get the results
@@ -70,21 +73,13 @@ class ProductController extends Controller
         // Add the wishlist field to each product and decode variations
         $products->transform(function($product) use ($wishlistProductIds) {
             $product->variations = json_decode($product->variations, true); // Decode JSON to associative array
-    
-            // Check if the product is in the wishlist
             $product->wishlist = in_array($product->id, $wishlistProductIds);
-
             $images = json_decode($product->images, true);
             $product->images = is_array($images) ? implode('|', $images) : $product->images;
-
+    
             $booleanFields = ['hide', 'featured', 'stock', 'trending', 'flash', 'new'];
             foreach ($booleanFields as $field) {
-                if (isset($product->{$field}) && $product->{$field} == 1) {
-                    $product->{$field} = 'on';
-                }
-                else{
-                    $product->{$field} = NULL;
-                }
+                $product->{$field} = isset($product->{$field}) && $product->{$field} == 1 ? 'on' : NULL;
             }
     
             return $product;
@@ -94,15 +89,21 @@ class ProductController extends Controller
         return response()->json($products);
     }
     
+    
 
     public function getproduct2(Request $request) {
-        // Start the query for fetching products
-        $query = \DB::table('products')->where(function($query) {
-            $query->where('hide', 0)
-                  ->orWhereNull('hide');
-        })->orderBy('ordernum', 'ASC');
+        // Start the product query with category and brand joins
+        $query = DB::table('products')
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+            ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
+            ->select('products.*', 'categories.category as category_name', 'brands.name as brand_name')
+            ->where(function($query) {
+                $query->where('hide', 0)
+                      ->orWhereNull('hide');
+            })
+            ->orderBy('ordernum', 'ASC');
     
-        // Apply filters for brand and category (arrays of IDs)
+        // Apply filters based on the request parameters
         if ($request->has('brand')) {
             $brandIds = $request->get('brand');
             if (is_string($brandIds) && preg_match('/^\[.*\]$/', $brandIds)) {
@@ -127,17 +128,17 @@ class ProductController extends Controller
             }
         }
     
-        // Apply other filters (price range, stock, etc.)
         if ($request->has('price_min')) {
             $query->where('price', '>=', $request->get('price_min'));
         }
         if ($request->has('price_max')) {
             $query->where('price', '<=', $request->get('price_max'));
         }
+    
         if ($request->has('stock') && $request->get('stock') == "on") {
             $query->where('stock', '1');
         }
-        if ($request->has('featured') &&  $request->get('featured') == "on") {
+        if ($request->has('featured') && $request->get('featured') == "on") {
             $query->where('featured', '1');
         }
         if ($request->has('new') && $request->get('new') == "on") {
@@ -150,65 +151,49 @@ class ProductController extends Controller
             $query->where('trending', '1');
         }
     
-        // Universal search logic
-        if ($request->has('search')) {
-            $searchTerm = $request->input('search');
-    
-            $searchableFields = ['name', 'brand', 'category', 'price', 'details'];
-            $specialFields = ['featured', 'trending', 'flash', 'offer', 'new'];
-    
-            if (in_array($searchTerm, $specialFields)) {
-                $query->whereNotNull($searchTerm)->orWhere($searchTerm, true);
-            } else {
-                $query->where(function ($q) use ($searchableFields, $searchTerm) {
-                    foreach ($searchableFields as $field) {
-                        $q->orWhere($field, 'LIKE', '%' . $searchTerm . '%');
-                    }
-                });
-            }
-        }
-    
         // Retrieve the authenticated user and their wishlist
         $user = auth('sanctum')->user();
         $wishlistProductIds = [];
-
+    
         if ($user && !empty($user->wishlist)) {
             $wishlist = json_decode(json_encode($user->wishlist), true);
             if (is_array($wishlist)) {
-                // Extract the product_ids from the wishlist
                 $wishlistProductIds = array_column($wishlist, 'product_id');
             }
         }
     
-        // Execute the query and paginate the results
+        // Execute the query and paginate results
         $results = $query->paginate(20);
         $results->getCollection()->transform(function($product) use ($wishlistProductIds) {
-            $product->variations = json_decode($product->variations, true); // Decode JSON to associative array
-            $product->wishlist = in_array($product->id, $wishlistProductIds); // Add wishlist field
+            $product->variations = json_decode($product->variations, true);
+            $product->wishlist = in_array($product->id, $wishlistProductIds);
             $images = json_decode($product->images, true);
             $product->images = is_array($images) ? implode('|', $images) : $product->images;
-
+    
             $booleanFields = ['hide', 'featured', 'stock', 'trending', 'flash', 'new'];
             foreach ($booleanFields as $field) {
-                if (isset($product->{$field}) && $product->{$field} == 1) {
-                    $product->{$field} = 'on';
-                }
-                else{
-                    $product->{$field} = NULL;
-                }
+                $product->{$field} = isset($product->{$field}) && $product->{$field} == 1 ? 'on' : NULL;
             }
+    
             return $product;
         });
     
         return response()->json($results);
     }
     
+    
 
     public function getProductDetail(Request $request, $id)
     {
-        // Retrieve the product from the database
-        $product = DB::table('products')->where('id', $id)->first();
+        // Retrieve the product with category and brand details
+        $product = DB::table('products')
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+            ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
+            ->select('products.*', 'categories.category as category_name', 'brands.name as brand_name')
+            ->where('products.id', $id)
+            ->first();
     
+        // Check if the product exists
         if (!$product) {
             return response()->json(['message' => 'Product not found'], 404);
         }
@@ -216,9 +201,10 @@ class ProductController extends Controller
         // Decode the product variations
         $product->variations = json_decode($product->variations);
     
+        // Retrieve authenticated user's wishlist
         $user = auth('sanctum')->user();
         $wishlistProductIds = [];
-
+    
         if ($user && !empty($user->wishlist)) {
             $wishlist = json_decode(json_encode($user->wishlist), true);
             if (is_array($wishlist)) {
@@ -228,27 +214,22 @@ class ProductController extends Controller
         }
     
         // Check if the product is in the user's wishlist
-        $inWishlist = in_array($id,$wishlistProductIds);
+        $product->wishlist = in_array($id, $wishlistProductIds);
     
-        // Add the wishlist status to the product data
-        $product->wishlist = $inWishlist;
-
+        // Handle product images
         $images = json_decode($product->images, true);
         $product->images = is_array($images) ? implode('|', $images) : $product->images;
-
+    
+        // Convert boolean fields to 'on' or NULL
         $booleanFields = ['hide', 'featured', 'stock', 'trending', 'flash', 'new'];
         foreach ($booleanFields as $field) {
-            if (isset($product->{$field}) && $product->{$field} == 1) {
-                $product->{$field} = 'on';
-            }
-            else{
-                $product->{$field} = NULL;
-            }
+            $product->{$field} = isset($product->{$field}) && $product->{$field} == 1 ? 'on' : NULL;
         }
     
-        // Return the product details with the wishlist status
+        // Return the product details with the wishlist status and category/brand names
         return response()->json($product);
     }
+    
 
 
     public function maxDiscount() {
