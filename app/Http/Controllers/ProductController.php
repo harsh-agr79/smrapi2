@@ -19,7 +19,7 @@ class ProductController extends Controller
         $query = DB::table('products')
             ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
             ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
-            ->select('products.*', 'categories.category as category_name', 'brands.name as brand_name')
+            ->select('products.*', 'categories.category as category', 'brands.name as brand')
             ->orderBy('ordernum', 'ASC')
             ->where(function($query) {
                 $query->where('hide', 0)
@@ -96,7 +96,7 @@ class ProductController extends Controller
         $query = DB::table('products')
             ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
             ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
-            ->select('products.*', 'categories.category as category_name', 'brands.name as brand_name')
+            ->select('products.*', 'categories.category as category', 'brands.name as brand')
             ->where(function($query) {
                 $query->where('hide', 0)
                       ->orWhereNull('hide');
@@ -189,7 +189,7 @@ class ProductController extends Controller
         $product = DB::table('products')
             ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
             ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
-            ->select('products.*', 'categories.category as category_name', 'brands.name as brand_name')
+            ->select('products.*', 'categories.category as category', 'brands.name as brand')
             ->where('products.id', $id)
             ->first();
     
