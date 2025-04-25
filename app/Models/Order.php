@@ -9,40 +9,45 @@ class Order extends Model
 {
     use HasFactory;
 
-
     protected $fillable = [
-        'user_id',
-        'order_number',
-        'status',
-        'total_amount',
-        'subtotal',
-        'tax',
-        'discount',
-        'shipping_fee',
-        'payment_method',
-        'payment_status',
-        'transaction_id',
-        'billing_address',
-        'shipping_method',
-        'order_notes',
-        'placed_at',
-        'completed_at',
-        'cancelled_at',
+        'customer_id', 'order_date', 'billing_address',
+        'payment_status', 'current_status',
+        'total_amount', 'delivery_charge', 'discount', 'discounted_total', 
+        'net_total', 'last_status_updated'
     ];
 
     protected $casts = [
         'billing_address' => 'array',
-        'placed_at' => 'datetime',
-        'completed_at' => 'datetime',
-        'cancelled_at' => 'datetime',
     ];
 
-    public function user()
+    protected static function boot()
     {
-        return $this->belongsTo(User::class);
+        parent::boot();
+
+        static::updating(function ($order) {
+            if ($order->isDirty('current_status')) { // Check if status has changed
+                OrderStatusHistory::create([
+                    'order_id'   => $order->id,
+                    'status'     => $order->current_status,
+                    'changed_at' => now(),
+                    'user_id'    => auth()->id() ?? null, // If authenticated, store user ID
+                ]);
+                
+                if ($order->customer && $order->customer->email) {
+                    // Mail::to($order->customer->email)->send(new OrderStatusUpdated($order));
+                }
+            }
+           
+        });
     }
 
-    public function items()
+
+    public function customer()
+    {
+        return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    public function OrderItem()
     {
         return $this->hasMany(OrderItem::class);
     }
@@ -52,9 +57,8 @@ class Order extends Model
         return $this->hasMany(Payment::class);
     }
 
-    public function history()
+    public function statusHistory()
     {
-        return $this->hasMany(OrderHistory::class);
+        return $this->hasMany(OrderStatusHistory::class);
     }
-
 }

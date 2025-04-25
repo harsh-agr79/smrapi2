@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Order;
+use App\Models\User;
 use App\Models\OrderItem;
+use App\Models\OrderStatusHistory;
 use App\Models\Payment;
 use App\Models\Product;
 
@@ -37,65 +39,136 @@ class OrderController extends Controller
             return response()->json(['message' => 'No default billing address found.'], 400);
         }
 
-        DB::beginTransaction();
+        $deliveryCharge = 200;
 
-        try {
-            // Calculate total amount
-            $totalAmount = collect($cart)->sum(function ($item) {
-                $product = Product::findOrFail($item['product_id']);
-                return $product->price * $item['quantity'];
-            });
-            $orderNumber = strtoupper(uniqid('ORDER-'));
-            // Create order
-            $order = Order::create([
-                'user_id' => $user->id,
-                'billing_address' => json_encode($billingAddress),
-                'status' => 'pending',
-                'total_amount' => $totalAmount,
-                'subtotal' => $totalAmount,
-                'order_number' => $orderNumber,
-                'payment_method' => $request->input('payment_method', 'unknown'),
-            ]);
-
-            // Add items to order
-            foreach ($cart as $item) {
-                $product = Product::findOrFail($item['product_id']);
-                $total = $product->price * $item['quantity'];
-
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $product->id,
-                    'quantity' => $item['quantity'],
-                    'price' => $product->price,
-                    'variation' => $item['variation'] ?? null,
-                    'total' => $total,
-                ]);
-            }
-
-            // Create payment
-            Payment::create([
-                'order_id' => $order->id,
-                'user_id' => $user->id,
-                'amount' => $totalAmount,
-                'status' => 'pending',
-                'payment_method' => $request->input('payment_method', 'unknown'),
-            ]);
-
-            // Update user's cart (clear it after checkout)
-            $user->update(['cart' => json_encode([])]);
-
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Order created successfully.',
-                'order' => $order,
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Failed to create order.',
-                'error' => $e->getMessage(),
-            ], 500);
+        $totalAmount = 0;
+        $totalDiscount = 0;
+        foreach ($cart as $item) {
+            $product = Product::find($item['product_id']);
+            if (!$product) continue;
+    
+            $price = $product->price;
+            $discountedPrice = $product->offer ?? $price;
+            $subtotal = $discountedPrice * $item['quantity'];
+            
+            $totalAmount += ($price * $item['quantity']);
+            $totalDiscount += ($price - $discountedPrice) * $item['quantity'];
         }
+    
+        $netTotal = $totalAmount - $totalDiscount + $deliveryCharge;
+
+        if($request->post('payment_method') == "cod"){
+            $pstat = "cod";
+        }
+        else{
+            $pstat = "pending";
+        }
+        // Create a new order
+        $order = Order::create(array_merge([
+            'customer_id'          => $user->id,
+            'order_date'           => now(),
+            'current_status'       => 'pending',
+            'total_amount'         => $totalAmount,
+            'delivery_charge'      => $deliveryCharge,
+            'discount'             => $totalDiscount,
+            'discounted_total'     => $totalAmount - $totalDiscount,
+            'net_total'            => $totalAmount - $totalDiscount + $deliveryCharge,
+            'payment_status'       => $pstat,
+            'last_status_updated'  => now(),
+            'billing_address' => json_encode($billingAddress),
+        ]));
+    
+        // Add order items
+        foreach ($cart as $cartItem) {
+            $product = Product::find($cartItem['product_id']);
+            if (!$product) continue;
+    
+            OrderItem::create([
+                'order_id'        => $order->id,
+                'customer_id'     => $user->id,
+                'product_id'      => $cartItem['product_id'],
+                'quantity'        => $cartItem['quantity'],
+                'variation'        => json_encode($cartItem['variation']),
+                'price'           => $product->price,
+                'discounted_price'=> $product->offer ?? $product->price,
+            ]);
+        }
+    
+        // Record initial order status
+        OrderStatusHistory::create([
+            'user_id' => '2',
+            'order_id'   => $order->id,
+            'status'     => 'pending',
+            'changed_at' => now(),
+        ]);
+    
+        // (Optional) Clear customer's cart after checkout
+        if ($request->post('payment_method') != "khalti") {
+            DB::table("users")->where('id', $user->id)->update([
+                'cart' => json_encode([]),
+               ]);
+        }
+        // Mail::to($customer->email)->send(new OrderStatusUpdated($order));
+
+        return response()->json([
+            'message' => 'Order placed successfully.',
+            'order'   => $order->load('OrderItem', 'statusHistory'),
+        ], 201);
+
+       
+    }
+
+    public function deletePendingOrderOnFailure(Request $request)
+    {
+        $orderId = $request->post('order_id');
+
+        $customer = $request->user();
+
+        $order = Order::where('id', $orderId)->where('customer_id',$customer->id)->where('payment_status', 'pending')->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Order not found or not pending.'], 404);
+        }
+
+        // Delete associated order items first
+        $order->OrderItem()->delete();
+
+        // Delete the order itself
+        $order->delete();
+
+        return response()->json(['message' => 'Pending order deleted due to payment failure.'], 200);
+    }
+
+
+    public function handlePaymentSuccess(Request $request)
+    {
+        $customer = $request->user(); // ✅ Get the authenticated user
+
+        $validated = $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'payment_reference' => 'required|string',
+            'amount' => 'required|numeric|min:0',
+            'payment_method' => 'required|string',
+        ]);
+
+        // ✅ Create payment entry
+        Payment::create([
+            'customer_id'=>$customer->id,
+            'order_id' => $validated['order_id'],
+            'payment_reference' => $validated['payment_reference'],
+            'amount' => $validated['amount'],
+            'payment_method' => $validated['payment_method'],
+        ]);
+
+       DB::table("users")->where('id', $customer->id)->update([
+        'cart' => json_encode([]),
+       ]);
+
+        // ✅ Update order's payment_status
+        Order::where('id', $validated['order_id'])->update([
+            'payment_status' => 'paid',
+        ]);
+
+        return response()->json(['message' => 'Payment successful, cart cleared, and order updated.'], 200);
     }
 }

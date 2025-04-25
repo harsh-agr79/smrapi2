@@ -54,5 +54,15 @@ class User extends Authenticatable implements MustVerifyEmail
         'wishlist' => 'array', // Cast wishlist JSON data as an array
         'billing_address' => 'array', // Cast billing_address JSON data as an array
     ];
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
 }
 

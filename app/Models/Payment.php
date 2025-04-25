@@ -9,18 +9,9 @@ class Payment extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'order_id',
-        'user_id',
-        'amount',
-        'payment_method',
-        'status',
-        'transaction_id',
-        'paid_at',
-    ];
 
-    protected $casts = [
-        'paid_at' => 'datetime',
+    protected $fillable = [
+        'customer_id', 'order_id', 'payment_reference', 'amount', 'payment_method'
     ];
 
     public function order()
@@ -28,8 +19,8 @@ class Payment extends Model
         return $this->belongsTo(Order::class);
     }
 
-    public function user()
+    public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'customer_id');
     }
 }

@@ -12,95 +12,178 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\{TextInput, Select, DatePicker, Section, Textarea, Grid};
+use Filament\Tables\Columns\{TextColumn, BadgeColumn};
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Forms\Components\KeyValue;
 
 class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('order_number')
-                    ->required()
-                    ->disabled(),
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'processing' => 'Processing',
-                        'processed' => 'Processed',
-                        'shipped' => 'Shipped',
-                        'completed' => 'Completed',
-                        'cancelled' => 'Cancelled',
-                        'failed' => 'Failed',
-                    ])
-                    ->required(),
-                Forms\Components\Textarea::make('order_notes'),
-                Forms\Components\Repeater::make('items')
-                    ->relationship('items')
-                    ->columnSpanFull()
-                    ->schema([
-                        Forms\Components\Select::make('product_id')
-                            ->relationship('product', 'name')
-                            ->label('Product')
-                            ->required(),
-                        Forms\Components\TextInput::make('quantity')
-                            ->numeric()
-                            ->required(),
-                        Forms\Components\TextInput::make('price')
-                            ->numeric()
-                            ->disabled(),
-                        Forms\Components\TextInput::make('total')
-                            ->numeric()
-                            ->disabled(),
-                    ]),
-                Forms\Components\Repeater::make('payments')
-                    ->relationship('payments')
-                    ->columnSpanFull()
-                    ->schema([
-                        Forms\Components\TextInput::make('amount')
-                            ->numeric()
-                            ->required(),
-                        Forms\Components\Select::make('payment_method')
-                            ->options([
-                                'credit_card' => 'Credit Card',
-                                'paypal' => 'PayPal',
-                                'bank_transfer' => 'Bank Transfer',
-                            ])
-                            ->required(),
-                        Forms\Components\Select::make('status')
-                            ->options([
-                                'pending' => 'Pending',
-                                'paid' => 'Paid',
-                                'failed' => 'Failed',
-                                'refunded' => 'Refunded',
-                            ])->required(),
-                        Forms\Components\TextInput::make('transaction_id')
-                            ->nullable(),
-                        Forms\Components\DateTimePicker::make('paid_at')
-                            ->label('Paid At')
-                            ->nullable(),
-                    ]),
+                Section::make('Order Details')->schema([
+                    Select::make('customer_id')
+                        ->label('Customer')
+                        ->relationship('customer', 'name')
+                        ->searchable()
+                        ->required(),
+    
+                    Select::make('current_status')
+                        ->label('Order Status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'approved' => 'Approved',
+                            'packing' => 'Packing',
+                            'shipped' => 'Shipped',
+                            'delivered' => 'Delivered',
+                            'cancelled' => 'Cancelled',
+                            'returned' => 'Returned',
+                            'refunded' => 'Refunded',
+                        ])
+                        ->required(),
+
+                    Select::make('payment_status')
+                        ->label('Payment Status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'paid' => 'Paid By any method',
+                            'cod' => 'COD',
+                        ])
+                        ->required(),
+    
+                    DatePicker::make('order_date')->label('Order Date')->required(),
+    
+                    TextInput::make('total_amount')
+                        ->label('Total Amount')
+                        ->prefix('रु')
+                        ->numeric()
+                        ->required()
+                        ->readOnly(),
+    
+                    TextInput::make('discount')
+                        ->label('Discount')
+                        ->prefix('रु')
+                        ->numeric()
+                        ->readOnly(),
+    
+                    TextInput::make('discounted_total')
+                        ->label('Discounted Total')
+                        ->prefix('रु')
+                        ->numeric()
+                        ->required()
+                        ->readOnly(),
+    
+                    TextInput::make('net_total')
+                        ->label('Net Total')
+                        ->prefix('रु')
+                        ->numeric()
+                        ->required()
+                        ->readOnly(),
+                    Section::make('Billing Address')
+                        ->schema(function ($get) {
+                            $json = $get('billing_address');
+                    
+                            $decoded = json_decode($json, true);
+                    
+                            if (!is_array($decoded)) {
+                                return [
+                                    Forms\Components\Placeholder::make('billing_address_invalid')
+                                        ->content('Invalid billing address.')
+                                ];
+                            }
+                    
+                            return collect($decoded)->map(function ($value, $key) {
+                                return Forms\Components\Placeholder::make("billing_address_{$key}")
+                                    ->label(ucwords(str_replace('_', ' ', $key)))
+                                    ->content(is_bool($value) ? ($value ? 'Yes' : 'No') : ($value ?: '—'));
+                            })->values()->all();
+                        })
+                        ->columns(2)
+                        ->collapsible(),
+                ])->columns(2),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->query(
+                Order::query()
+                    ->orderBy('created_at', 'desc') // Order by created_at descending
+            )
             ->columns([
-                Tables\Columns\TextColumn::make('order_number')->sortable(),
-                Tables\Columns\TextColumn::make('user.name')->label('User'),
-                Tables\Columns\TextColumn::make('status')->sortable(),
-                Tables\Columns\TextColumn::make('total_amount')->money('NPR')->sortable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
+                TextColumn::make('id')->label('Order ID')->sortable(),
+                TextColumn::make('customer.name')->label('Customer')->sortable(),
+                TextColumn::make('current_status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'warning',
+                        'approved' => 'info',
+                        'processing' => 'info',
+                        'packing' => 'secondary',
+                        'shipped' => 'primary',
+                        'delivered' => 'success',
+                        'cancelled' => 'danger',
+                        'returned' => 'danger',
+                        'refunded' => 'dark',
+                    })
+                    ->sortable(),
+                TextColumn::make('order_date')->label('Order Date')->date(),
+                TextColumn::make('total_amount')->label('Total Amount')->money('NPR')->sortable(),
+                TextColumn::make('discounted_total')->label('Discounted Total')->money('NPR'),
+                TextColumn::make('net_total')->label('Net Total')->money('NPR')->sortable(),
             ])
+            ->searchable()
+            ->defaultPaginationPageOption(25)
             ->filters([
-                //
-            ])
+                Filter::make('created_from')
+                    ->form([
+                        DatePicker::make('created_from'),
+                        // DatePicker::make('created_until'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['created_from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                            );
+                            // ->when(
+                            //     $data['created_until'],
+                            //     fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                            // );
+                    }),
+                    Filter::make('created_until')
+                    ->form([
+                        // DatePicker::make('created_from'),
+                        DatePicker::make('created_until'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            // ->when(
+                            //     $data['created_from'],
+                            //     fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                            // );
+                            ->when(
+                                $data['created_until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                            );
+                    }),
+                
+                ], layout: FiltersLayout::AboveContentCollapsible)
+            ->filtersFormColumns(3)
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -112,7 +195,9 @@ class OrderResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\OrderItemRelationManager::class,
+            RelationManagers\StatusHistoryRelationManager::class,
+            RelationManagers\PaymentsRelationManager::class,
         ];
     }
 
@@ -123,5 +208,12 @@ class OrderResource extends Resource
             'create' => Pages\CreateOrder::route('/create'),
             'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $modelClass = static::$model;
+
+        return (string) $modelClass::where('current_status', 'pending')->count();
     }
 }
