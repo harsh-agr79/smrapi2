@@ -68,6 +68,12 @@ class OrderResource extends Resource
                         ->numeric()
                         ->required()
                         ->readOnly(),
+                    TextInput::make('delivery_charge')
+                        ->label('Delivery Charge')
+                        ->prefix('रु')
+                        ->numeric()
+                        ->required()
+                        ->readOnly(),
     
                     TextInput::make('discount')
                         ->label('Discount')
