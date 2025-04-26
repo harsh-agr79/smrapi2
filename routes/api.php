@@ -22,6 +22,7 @@ use App\Http\Controllers\FrontController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\BillingAddressController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\BlogController;
 
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
 ->middleware(['signed', 'throttle:6,1'])
