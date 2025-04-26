@@ -17,7 +17,7 @@ class OrderController extends Controller
     public function checkout(Request $request)
     {
         $user = $request->user();
-        return response()->json($request->post('payment_method'));
+        // return response()->json($request->post('payment_method'));
         dd($request);
         try {
             $request->validate([
