@@ -18,7 +18,7 @@ class OrderController extends Controller
     {
         $user = $request->user();
         // return response()->json($request->post('payment_method'));
-        dd($request);
+        // dd($request);
         try {
             $request->validate([
                 'payment_method' => 'required|string',
