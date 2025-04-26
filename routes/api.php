@@ -93,6 +93,9 @@ Route::group(['middleware'=>'api_key'], function () {
         Route::post('/orders/payment-success', [OrderController::class, 'handlePaymentSuccess']);
         Route::post('/orders/delete-on-failure', [OrderController::class, 'deletePendingOrderOnFailure']);
 
+        Route::get('/orders', [OrderController::class, 'getOrders']);
+        Route::get('/orders/{orderId}', [OrderController::class, 'getOrderDetails']);
+
         Route::get('/provinces', [FrontController::class, 'getProvinces']); //done
         Route::post('/districts', [FrontController::class, 'getDistrictsByProvince']); //done
         Route::post('/municipalities', [FrontController::class, 'getMunicipalitiesByDistrict']); //done

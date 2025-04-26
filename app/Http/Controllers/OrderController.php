@@ -186,4 +186,34 @@ class OrderController extends Controller
 
         return response()->json(['message' => 'Payment successful, cart cleared, and order updated.'], 200);
     }
+
+
+    public function getOrders(Request $request)
+    {
+        $customer = $request->user();
+
+        $orders = Order::where('customer_id', $customer->id)
+            ->whereIn('payment_status', ['paid', 'cod'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json(['orders' => $orders], 200);
+    }
+
+    public function getOrderDetails(Request $request, $orderId)
+    {
+        $customer = $request->user();
+
+        $order = Order::where('customer_id', $customer->id)
+            ->where('id', $orderId)
+            ->whereIn('payment_status', ['paid', 'cod'])
+            ->with('OrderItem.product', 'statusHistory', 'payments')
+            ->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Order not found.'], 404);
+        }
+
+        return response()->json(['order' => $order], 200);
+    }
 }
