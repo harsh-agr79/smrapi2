@@ -103,7 +103,7 @@ class OrderController extends Controller
         ]);
     
         // (Optional) Clear customer's cart after checkout
-        if ($request->post('payment_method') != "khalti") {
+        if ($request->post('payment_method') == "cod") {
             DB::table("users")->where('id', $user->id)->update([
                 'cart' => json_encode([]),
                ]);
