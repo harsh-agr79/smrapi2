@@ -17,9 +17,17 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-        $request->validate([
-            'payment_method' => 'required|string',
-        ]);
+        try {
+            $request->validate([
+                'payment_method' => 'required|string',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $e->errors(),
+            ], 422);
+        }
 
         $cart = $user->cart ?? []; // Decode JSON cart
 
