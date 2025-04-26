@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\Payment;
 use App\Models\Product;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
