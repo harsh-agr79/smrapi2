@@ -17,7 +17,7 @@ class OrderController extends Controller
     public function checkout(Request $request)
     {
         $user = $request->user();
-        return response()->json($request->post());
+        
         try {
             $request->validate([
                 'payment_method' => 'required|string',
