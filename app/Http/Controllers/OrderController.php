@@ -17,7 +17,10 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-        
+        $request->validate([
+            'payment_method' => 'required|string',
+        ]);
+
         $cart = $user->cart ?? []; // Decode JSON cart
 
         if (is_string($cart)) {
@@ -56,6 +59,8 @@ class OrderController extends Controller
         }
     
         $netTotal = $totalAmount - $totalDiscount + $deliveryCharge;
+
+        $pstat = "pending";
 
         if($request->post('payment_method') == "cod"){
             $pstat = "cod";
