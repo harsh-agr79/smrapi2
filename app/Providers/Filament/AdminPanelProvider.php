@@ -26,12 +26,12 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->brandLogo(asset('logo/logo2.png'))
+            ->brandLogo(asset('logo/smrlogo.png'))
             ->brandLogoHeight('3rem')
             ->favicon(asset('logo/smrlogo.png'))
             ->login()
             ->colors([
-                'primary' => '#00c200',
+                'primary' => '#F16022',
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
