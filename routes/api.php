@@ -49,6 +49,8 @@ Route::group(['middleware'=>'api_key'], function () {
     
     Route::get('terms', [FrontController::class, 'getTerms']); //done
     Route::get('policy', [FrontController::class, 'getPolicy']); //done
+
+    Route::get('/faqs', [FAQController::class, 'getFaq']);
     
     Route::post('/forgotpwd', [AuthController::class, 'sendResetLinkEmail']); //done
     Route::post('/resetpwd/validatecredentials', [AuthController::class, 'rp_validateCreds']); //done
