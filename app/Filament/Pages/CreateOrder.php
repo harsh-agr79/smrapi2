@@ -184,7 +184,7 @@ class CreateOrder extends Page
             ->join('categories', 'products.category_id', '=', 'categories.id')
             ->orderBy('categories.ordernum') // Order by category order
             ->orderBy('products.ordernum')   // Order within each category
-            ->select('products.*') // Important: select only product fields to avoid column conflicts
+            ->select('products.*', 'categories.category as category') // Important: select only product fields to avoid column conflicts
             ->get();
     }
 

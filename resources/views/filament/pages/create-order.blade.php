@@ -68,7 +68,7 @@
                     <div class="flex-1">
                         <p class="product-name" style="font-size: 13px; font-weight: 500;">{{ $product->name }}</p>
                         <p class="text-xs text-gray-600 product-category">
-                            {{ $product->category->category }}
+                            {{ $product->category }}
                         </p>
 
                         <div class="product-price">
