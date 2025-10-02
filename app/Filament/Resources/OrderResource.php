@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers;
 use App\Models\Order;
+use App\Models\Store;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -34,6 +35,12 @@ class OrderResource extends Resource
                     Select::make('customer_id')
                         ->label('Customer')
                         ->relationship('customer', 'name')
+                        ->searchable()
+                        ->required(),
+
+                    Select::make('store_id')
+                        ->label('Store')
+                        ->relationship('store', 'name')
                         ->searchable()
                         ->required(),
     
