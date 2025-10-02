@@ -58,7 +58,7 @@
                 <div class="product-card flex items-center gap-4 border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-white dark:bg-gray-900 text-black dark:text-white shadow-sm w-full"
                     style="margin-bottom:5px;" data-hidden="{{ $product->hidden ? 'true' : 'false' }}">
                     <div class="flex overflow-hidden rounded border">
-                        <img src="{{ $product->image && file_exists(storage_path('app/public/' . $product->image))
+                        <img src="{{ $product->images[0] && file_exists(storage_path('app/public/' . $product->images[0]))
                             ? asset('storage/' . $product->image)
                             : asset('images/dummy.png') }}"
                             alt="{{ $product->name }}" style="width: 80px;" />
