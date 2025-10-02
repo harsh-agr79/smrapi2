@@ -59,7 +59,7 @@
                     style="margin-bottom:5px;" data-hidden="{{ $product->hidden ? 'true' : 'false' }}">
                     <div class="flex overflow-hidden rounded border">
                         <img src="{{ $product->images[0] && file_exists(storage_path('app/public/' . $product->images[0]))
-                            ? asset('storage/' . $product->image)
+                            ? asset($product->images[0])
                             : asset('images/dummy.png') }}"
                             alt="{{ $product->name }}" style="width: 80px;" />
                     </div>
