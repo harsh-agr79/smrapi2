@@ -200,6 +200,12 @@ class ProductController extends Controller
     
         // Decode the product variations
         $product->variations = json_decode($product->variations);
+        $product->reviews = DB::table('product_reviews')
+            ->leftJoin('users', 'product_reviews.user_id', '=', 'users.id')
+            ->select('product_reviews.*', 'users.name as user_name')
+            ->orderBy('product_reviews.created_at', 'DESC')
+            ->where('product_reviews.product_id', $id)
+            ->get();
     
         // Retrieve authenticated user's wishlist
         $user = auth('sanctum')->user();

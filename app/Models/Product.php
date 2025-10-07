@@ -56,4 +56,9 @@ class Product extends Model
     {
         $this->attributes['variations'] = json_encode($value);
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(ProductReview::class);
+    }
 }

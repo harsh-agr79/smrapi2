@@ -23,6 +23,9 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\BillingAddressController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\FAQController;
+use App\Http\Controllers\ReviewController;
+
 
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
 ->middleware(['signed', 'throttle:6,1'])
@@ -72,6 +75,9 @@ Route::group(['middleware'=>'api_key'], function () {
         Route::get('/user', function (Request $request) {
             return $request->user();
         });
+
+        Route::post('/submit-review', [ReviewController::class, 'submitReview']); //new
+
         Route::post('/cart/add', [CartController::class, 'addToCart']); //done
         Route::post('/cart/update', [CartController::class, 'updateCart']); //done
         Route::post('/cart/remove', [CartController::class, 'removeFromCart']); //done
