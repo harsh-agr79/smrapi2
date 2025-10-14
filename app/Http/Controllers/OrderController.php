@@ -195,6 +195,7 @@ class OrderController extends Controller
         $orders = Order::where('customer_id', $customer->id)
             ->whereIn('payment_status', ['paid', 'cod'])
             ->orderBy('created_at', 'desc')
+            ->with('OrderItem.product', 'statusHistory', 'payments')
             ->get();
 
         return response()->json(['orders' => $orders], 200);
