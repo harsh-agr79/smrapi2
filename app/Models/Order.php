@@ -13,7 +13,7 @@ class Order extends Model
         'customer_id', 'order_date', 'billing_address',
         'payment_status', 'current_status',
         'total_amount', 'delivery_charge', 'discount', 'discounted_total', 
-        'net_total', 'last_status_updated'
+        'net_total', 'last_status_updated', 'store_id'
     ];
 
     protected $casts = [
