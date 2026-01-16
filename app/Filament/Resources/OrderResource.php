@@ -41,6 +41,7 @@ class OrderResource extends Resource
                     Select::make('store_id')
                         ->label('Store')
                         ->relationship('store', 'name')
+                        ->options(Store::pluck('name', 'id'))
                         ->searchable()
                         ->required(),
     

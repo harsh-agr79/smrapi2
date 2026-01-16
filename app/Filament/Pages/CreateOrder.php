@@ -95,6 +95,7 @@ class CreateOrder extends Page
                 ->label( 'Select User' )
                 ->options( User::pluck( 'name', 'id' ) )
                 ->searchable()
+                ->live()
                 ->required()
                  ->createOptionForm([
                     TextInput::make('userid')
@@ -115,6 +116,7 @@ class CreateOrder extends Page
                  Select::make( 'selectedStore' )
                 ->label( 'Select Store' )
                 ->options( Store::pluck( 'name', 'id' ) )
+                ->live()
                 ->searchable()
                 ->required(),
                 DatePicker::make( 'order_date' )
@@ -142,6 +144,7 @@ class CreateOrder extends Page
         }
         $this->form->fill([
             'selectedUser' => null,
+            'selectedStore' => null,
             'order_date' => now()->toDateString(),
         ]);
     }
@@ -159,6 +162,7 @@ class CreateOrder extends Page
             'total_amount' => $this->getCartTotal(),
             'discounted_total' => $this->getCartTotal(),
             'net_total' => $this->getCartTotal(), // apply discounts if any
+            'last_status_updated' => now(),
         ]);
             foreach ($this->getCartItems() as $item) {
                 $product = \App\Models\Product::find($item['id']);
