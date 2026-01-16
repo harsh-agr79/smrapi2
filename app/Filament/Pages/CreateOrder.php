@@ -10,6 +10,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use App\Models\User;
+use App\Models\Store;
 use Filament\Actions\Action;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -29,6 +30,7 @@ class CreateOrder extends Page
 
     public $quantities = [];
     public $selectedUser = null;
+    public $selectedStore = null;
     public $order_date;
     public $search = '';
 
@@ -88,7 +90,7 @@ class CreateOrder extends Page
 
     public function form( Form $form ): Form {
         return $form->schema( [
-            Grid::make( 2 )->schema( [
+            Grid::make( 3 )->schema( [
                 Select::make( 'selectedUser' )
                 ->label( 'Select User' )
                 ->options( User::pluck( 'name', 'id' ) )
@@ -110,6 +112,11 @@ class CreateOrder extends Page
 
                     return $user->id;
                 }),
+                 Select::make( 'selectedStore' )
+                ->label( 'Select Store' )
+                ->options( Store::pluck( 'name', 'id' ) )
+                ->searchable()
+                ->required(),
                 DatePicker::make( 'order_date' )
                 ->label( 'Order Date' )
                 ->default( now() ) // ⬅️ sets today's date
@@ -139,44 +146,47 @@ class CreateOrder extends Page
         ]);
     }
 
-    // public function checkout()
-    // {   
-    //     $orderid = time().$this->selectedUser;
-    //     $order = Order::create([
-    //         'user_id' => $this->selectedUser,
-    //         'orderid' => $orderid,
-    //         'mainstatus' => 'pending',
-    //         'date' => $this->order_date,
-    //         'save' => false,
-    //         'total' => $this->getCartTotal(),
-    //         'net_total' => $this->getCartTotal(), // apply discounts if any
-    //     ]);
-    //         foreach ($this->getCartItems() as $item) {
-    //             $product = \App\Models\Product::find($item['id']);
-    //             // $offers = $product->offer;
-    //             $quantity = $item['quantity'];
-    //             OrderItem::create([
-    //                 'orderid' => $order->orderid,
-    //                 'product_id' => $item['id'],
-    //                 'price' => $item['price'],
-    //                 'quantity' => $item['quantity'],
-    //                 'approvedquantity' => 0,
-    //                 'status' => 'pending'
-    //             ]);
-    //         }
-    //     $this->selectedUser = null;
-    //     $this->order_date = now()->toDateString();
-    //     foreach ($this->quantities as $key => $val) {
-    //         $this->quantities[$key] = '';
-    //     }
-    //     // $this->dispatch('close-modal');
-    //     Notification::make()
-    //         ->title('Order Created!')
-    //         ->success()
-    //         ->send();
-    //     return redirect('/admin/orders');
+    public function checkout()
+    {  
+        $order = Order::create([
+            'customer_id' => $this->selectedUser,
+            'date' => $this->order_date." ".now()->toTimeString(),
+            'store_id' => $this->selectedStore,
+            'billing_address' => json_encode([]),
+            'delivery_charge' => 0,
+            'discount' => 0,
+            'payment_status' => 'cod',
+            'total_amount' => $this->getCartTotal(),
+            'discounted_total' => $this->getCartTotal(),
+            'net_total' => $this->getCartTotal(), // apply discounts if any
+        ]);
+            foreach ($this->getCartItems() as $item) {
+                $product = \App\Models\Product::find($item['id']);
+                // $offers = $product->offer;
+                $quantity = $item['quantity'];
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'customer_id' => $this->selectedUser,
+                    'product_id' => $item['id'],
+                    'variation' => null,
+                    'quantity' => $quantity,
+                    'price' => $product->price,
+                    'discounted_price' => $product->offer ?? $product->price,
+                ]);
+            }
+        $this->selectedUser = null;
+        $this->order_date = now()->toDateString();
+        foreach ($this->quantities as $key => $val) {
+            $this->quantities[$key] = '';
+        }
+        // $this->dispatch('close-modal');
+        Notification::make()
+            ->title('Order Created!')
+            ->success()
+            ->send();
+        return redirect('/admin/orders');
         
-    // }
+    }
 
    public function getProductsProperty()
     {
