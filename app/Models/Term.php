@@ -10,6 +10,8 @@ class Term extends Model
     use HasFactory;
 
     protected $fillable = [
+        'meta_title',
+        'meta_description',
         'terms'
     ];
 }

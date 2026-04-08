@@ -10,6 +10,8 @@ class Policy extends Model
     use HasFactory;
 
     protected $fillable = [
+        'meta_title',
+        'meta_description',
         'policy'
     ];
 }

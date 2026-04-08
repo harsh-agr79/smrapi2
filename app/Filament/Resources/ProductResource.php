@@ -24,6 +24,8 @@ class ProductResource extends Resource {
         return $form
         ->schema( [
             Forms\Components\TextInput::make( 'name' )->required()->label( 'Product Name' ),
+            Forms\Components\TextInput::make( 'meta_title' )->label( 'Meta Title' ),
+            Forms\Components\Textarea::make( 'meta_description' )->label( 'Meta Description' ),
             Forms\Components\Select::make( 'brand_id' )
             ->relationship( 'brand', 'name' )
             ->label( 'Brand' )

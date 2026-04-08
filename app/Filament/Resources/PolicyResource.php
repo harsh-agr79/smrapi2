@@ -25,6 +25,8 @@ class PolicyResource extends Resource
     {
         return $form
             ->schema([
+                    Forms\Components\TextInput::make( 'meta_title' )->label( 'Meta Title' ),
+                    Forms\Components\Textarea::make( 'meta_description' )->label( 'Meta Description' ),
                 Forms\Components\RichEditor::make('policy')
                 ->label('Policy')
                 ->toolbarButtons([
