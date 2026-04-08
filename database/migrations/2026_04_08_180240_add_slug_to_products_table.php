@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
             // 1. Find all products with an empty slug and give them a temporary unique slug
+
+        $table->string('slug')->nullable()->after('name'); // Add slug column if it doesn't exist
+        
         $products = DB::table('products')->where('slug', '')->orWhereNull('slug')->get();
         
         foreach ($products as $product) {
