@@ -12,25 +12,23 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            // 1. Find all products with an empty slug and give them a temporary unique slug
+            $table->string('slug')->nullable();
+        });
 
-        $table->string('slug')->nullable()->after('name'); // Add slug column if it doesn't exist
-        
-        $products = DB::table('products')->where('slug', '')->orWhereNull('slug')->get();
+        // STEP 2: Give every existing product a temporary unique slug
+        $products = DB::table('products')->get();
         
         foreach ($products as $product) {
             DB::table('products')
                 ->where('id', $product->id)
                 ->update([
-                    // Generates something like: existing-name-12, or just temp-slug-12
-                    'slug' => 'temp-slug-' . $product->id 
+                    'slug' => 'temp-product-' . $product->id 
                 ]);
         }
 
-        // 2. Now that there are no duplicates, it is safe to apply the unique constraint
+        // STEP 3: Now that every row has a unique slug, apply the unique constraint
         Schema::table('products', function (Blueprint $table) {
             $table->unique('slug');
-        });
         });
     }
 
@@ -39,8 +37,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            //
+       Schema::table('products', function (Blueprint $table) {
+            $table->dropUnique(['slug']);
+            $table->dropColumn('slug');
         });
     }
 };
