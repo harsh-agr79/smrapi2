@@ -25,6 +25,11 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\FAQController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\Api\EmiApplicationController;
+
+// routes/api.php
+
+
 
 
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
@@ -67,7 +72,7 @@ Route::group(['middleware'=>'api_key'], function () {
 
     Route::get('metatag/{id}', [FrontController::class, 'getMetaTag']); //done
 
-   
+    Route::post('/emi-application', [EmiApplicationController::class, 'store']);
 
     Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail'])
     ->middleware(['auth:sanctum', 'throttle:6,1'])
