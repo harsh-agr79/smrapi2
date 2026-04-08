@@ -30,6 +30,9 @@ class Product extends Model
         'flash',
         'new',
         'variations',
+        'down_payment_percent',
+        'payment_terms',
+        'is_emi_available',
     ];
 
     protected $casts = [
@@ -42,6 +45,8 @@ class Product extends Model
         'trending' => 'boolean',
         'flash' => 'boolean',
         'new' => 'boolean',
+        'payment_terms' => 'array',
+        'is_emi_available' => 'boolean',
     ];
 
     public function brand()

@@ -65,6 +65,8 @@ Route::group(['middleware'=>'api_key'], function () {
     Route::get('/getBlogs', [BlogController::class, 'getBlog']);
     Route::get('/getBlog/{id}', [BlogController::class, 'getBlogContent']);
 
+    Route::get('metatag/{id}', [FrontController::class, 'getMetaTag']); //done
+
    
 
     Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail'])

@@ -12,6 +12,11 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Repeater;
 
 class ProductResource extends Resource {
     protected static ?string $model = Product::class;
@@ -79,7 +84,35 @@ class ProductResource extends Resource {
             Forms\Components\Toggle::make( 'flash' )->label( 'Flash Sale' )->nullable(),
             Forms\Components\Toggle::make( 'new' )->label( 'New Arrival' )->nullable(),
             Forms\Components\Toggle::make( 'stock' )->label( 'Out of Stock' )->nullable(),
-        ] );
+            Toggle::make('is_emi_available')
+                ->label('EMI Available')
+                ->nullable()
+                ->live()
+                ->afterStateUpdated(function (Set $set, $state) {
+                    if (! $state) {
+                        $set('down_payment_percent', null);
+                        $set('payment_terms', null); 
+                    }
+                }),
+
+            TextInput::make('down_payment_percent')
+                ->label('Down Payment %')
+                ->numeric()
+                ->nullable()
+                ->visible(fn (Get $get): bool => (bool) $get('is_emi_available')),
+
+            Repeater::make('payment_terms')
+                ->schema([
+                    TextInput::make('term')
+                        ->label('Payment Term In Months')
+                        ->numeric()
+                        ->required(),
+                ])
+                ->label('Payment Terms')
+                ->addActionLabel('Add Payment Term')
+                ->nullable()
+                ->visible(fn (Get $get): bool => (bool) $get('is_emi_available')),
+                    ] );
     }
 
     public static function table( Table $table ): Table {
@@ -87,6 +120,7 @@ class ProductResource extends Resource {
         ->columns( [
             Tables\Columns\TextColumn::make( 'name' )->label( 'Name' )->searchable(),
             Tables\Columns\TextColumn::make( 'price' )->label( 'Price' )->sortable(),
+            Tables\Columns\BooleanColumn::make( 'is_emi_available' )->label( 'EMI Available' ),
             Tables\Columns\BooleanColumn::make( 'featured' )->label( 'Featured' ),
             Tables\Columns\BooleanColumn::make( 'new' )->label( 'New' ),
             Tables\Columns\BooleanColumn::make( 'flash' )->label( 'Flash' ),

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use App\Models\MetaTag;
 
 class FrontController extends Controller
 {
@@ -83,5 +84,19 @@ class FrontController extends Controller
                                   ->pluck('municipality');
 
         return response()->json($municipalities);
+    }
+
+    public function getMetaTag($id)
+    {
+        $metaTag = MetaTag::where('slug', $id)->first();
+
+        if (!$metaTag) {
+            return response()->json(['error' => 'Meta tag not found'], 404);
+        }
+
+        return response()->json([
+            'meta_title' => $metaTag->meta_title,
+            'meta_description' => $metaTag->meta_description,
+        ], 200);
     }
 }
