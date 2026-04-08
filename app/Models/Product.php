@@ -33,6 +33,7 @@ class Product extends Model
         'down_payment_percent',
         'payment_terms',
         'is_emi_available',
+        'slug',
     ];
 
     protected $casts = [

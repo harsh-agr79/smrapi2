@@ -44,6 +44,7 @@ Route::group(['middleware'=>'api_key'], function () {
     Route::get('/products', [ProductController::class, 'getproduct']); //done
     Route::get('/products2', [ProductController::class, 'getproduct2']); //done
     Route::get('/product/{id}', [ProductController::class, 'getproductdetail']); //done
+    Route::get('/productslug/{slug}', [ProductController::class, 'getproductdetailSlug']); //done
     
     Route::get('/brands', [BrandController::class, 'getBrands']); //done
     Route::get('/category', [CategoryController::class, 'getCategoryApi']); //done

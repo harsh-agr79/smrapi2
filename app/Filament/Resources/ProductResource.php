@@ -29,6 +29,12 @@ class ProductResource extends Resource {
         return $form
         ->schema( [
             Forms\Components\TextInput::make( 'name' )->required()->label( 'Product Name' ),
+            Forms\Components\TextInput::make( 'slug' )
+                ->required()
+                ->unique(ignoreRecord: true)
+                ->rules(['regex:/^[a-zA-Z0-9\-]+$/'])
+                ->helperText('Only letters, numbers, and hyphens (-) are allowed')
+                ->maxLength(255),
             Forms\Components\TextInput::make( 'meta_title' )->label( 'Meta Title' ),
             Forms\Components\Textarea::make( 'meta_description' )->label( 'Meta Description' ),
             Forms\Components\Select::make( 'brand_id' )

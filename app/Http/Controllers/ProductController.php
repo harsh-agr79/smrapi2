@@ -235,6 +235,59 @@ class ProductController extends Controller
         // Return the product details with the wishlist status and category/brand names
         return response()->json($product);
     }
+
+     public function getProductDetailSlug(Request $request, $slug)
+    {
+        // Retrieve the product with category and brand details
+        $product = DB::table('products')
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+            ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
+            ->select('products.*', 'categories.category as category', 'brands.name as brand')
+            ->where('products.slug', $slug)
+            ->first();
+    
+        // Check if the product exists
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+    
+        // Decode the product variations
+        $product->variations = json_decode($product->variations);
+        $product->reviews = DB::table('product_reviews')
+            ->leftJoin('users', 'product_reviews.user_id', '=', 'users.id')
+            ->select('product_reviews.*', 'users.name as user_name')
+            ->orderBy('product_reviews.created_at', 'DESC')
+            ->where('product_reviews.product_id', $id)
+            ->get();
+    
+        // Retrieve authenticated user's wishlist
+        $user = auth('sanctum')->user();
+        $wishlistProductIds = [];
+    
+        if ($user && !empty($user->wishlist)) {
+            $wishlist = json_decode(json_encode($user->wishlist), true);
+            if (is_array($wishlist)) {
+                // Extract the product_ids from the wishlist
+                $wishlistProductIds = array_column($wishlist, 'product_id');
+            }
+        }
+    
+        // Check if the product is in the user's wishlist
+        $product->wishlist = in_array($id, $wishlistProductIds);
+    
+        // Handle product images
+        $images = json_decode($product->images, true);
+        $product->images = is_array($images) ? implode('|', $images) : $product->images;
+    
+        // Convert boolean fields to 'on' or NULL
+        $booleanFields = ['hide', 'featured', 'stock', 'trending', 'flash', 'new'];
+        foreach ($booleanFields as $field) {
+            $product->{$field} = isset($product->{$field}) && $product->{$field} == 1 ? 'on' : NULL;
+        }
+    
+        // Return the product details with the wishlist status and category/brand names
+        return response()->json($product);
+    }
     
 
 
