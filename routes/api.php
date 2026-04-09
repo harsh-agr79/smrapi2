@@ -42,6 +42,7 @@ Route::group(['middleware'=>'api_key'], function () {
     Route::post('/register', [AuthController::class, 'register']); //done
     
     Route::get('/products', [ProductController::class, 'getproduct']); //done
+    Route::get('/emiproducts', [ProductController::class, 'getemiproduct']); //done
     Route::get('/products2', [ProductController::class, 'getproduct2']); //done
     Route::get('/product/{id}', [ProductController::class, 'getproductdetail']); //done
     Route::get('/productslug/{slug}', [ProductController::class, 'getproductdetailSlug']); //done

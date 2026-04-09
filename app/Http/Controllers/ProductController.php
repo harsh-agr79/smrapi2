@@ -180,6 +180,97 @@ class ProductController extends Controller
     
         return response()->json($results);
     }
+
+    public function getemiproduct(Request $request) {
+        // Start the product query with category and brand joins
+        $query = DB::table('products')
+            ->where('is_emi_available', '1')
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+            ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
+            ->select('products.*', 'categories.category as category', 'brands.name as brand')
+            ->where(function($query) {
+                $query->where('hide', 0)
+                      ->orWhereNull('hide');
+            })
+            ->orderBy('ordernum', 'ASC');
+    
+        // Apply filters based on the request parameters
+        if ($request->has('brand')) {
+            $brandIds = $request->get('brand');
+            if (is_string($brandIds) && preg_match('/^\[.*\]$/', $brandIds)) {
+                $brandIds = json_decode($brandIds, true);
+            }
+            if (is_array($brandIds)) {
+                $query->whereIn('brand_id', $brandIds);
+            } else {
+                $query->where('brand_id', $brandIds);
+            }
+        }
+    
+        if ($request->has('category')) {
+            $categoryIds = $request->get('category');
+            if (is_string($categoryIds) && preg_match('/^\[.*\]$/', $categoryIds)) {
+                $categoryIds = json_decode($categoryIds, true);
+            }
+            if (is_array($categoryIds)) {
+                $query->whereIn('category_id', $categoryIds);
+            } else {
+                $query->where('category_id', $categoryIds);
+            }
+        }
+    
+        if ($request->has('price_min')) {
+            $query->where('price', '>=', $request->get('price_min'));
+        }
+        if ($request->has('price_max')) {
+            $query->where('price', '<=', $request->get('price_max'));
+        }
+    
+        if ($request->has('stock') && $request->get('stock') == "on") {
+            $query->where('stock', '1');
+        }
+        if ($request->has('featured') && $request->get('featured') == "on") {
+            $query->where('featured', '1');
+        }
+        if ($request->has('new') && $request->get('new') == "on") {
+            $query->where('new', '1');
+        }
+        if ($request->has('flash') && $request->get('flash') == "on") {
+            $query->where('flash', '1');
+        }
+        if ($request->has('trending') && $request->get('trending') == "on") {
+            $query->where('trending', '1');
+        }
+    
+        // Retrieve the authenticated user and their wishlist
+        $user = auth('sanctum')->user();
+        $wishlistProductIds = [];
+    
+        if ($user && !empty($user->wishlist)) {
+            $wishlist = json_decode(json_encode($user->wishlist), true);
+            if (is_array($wishlist)) {
+                $wishlistProductIds = array_column($wishlist, 'product_id');
+            }
+        }
+    
+        // Execute the query and paginate results
+        $results = $query->paginate(20);
+        $results->getCollection()->transform(function($product) use ($wishlistProductIds) {
+            $product->variations = json_decode($product->variations, true);
+            $product->wishlist = in_array($product->id, $wishlistProductIds);
+            $images = json_decode($product->images, true);
+            $product->images = is_array($images) ? implode('|', $images) : $product->images;
+    
+            $booleanFields = ['hide', 'featured', 'stock', 'trending', 'flash', 'new'];
+            foreach ($booleanFields as $field) {
+                $product->{$field} = isset($product->{$field}) && $product->{$field} == 1 ? 'on' : NULL;
+            }
+    
+            return $product;
+        });
+    
+        return response()->json($results);
+    }
     
     
 
