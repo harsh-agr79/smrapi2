@@ -25,7 +25,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\FAQController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\Api\EmiApplicationController;
+use App\Http\Controllers\EmiApplicationController;
 
 // routes/api.php
 
