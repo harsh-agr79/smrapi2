@@ -53,6 +53,12 @@ class BlogResource extends Resource
             Forms\Components\Textarea::make('meta_description')
                 ->label('Meta Description'),
 
+             Forms\Components\FileUpload::make('meta_image')
+                ->label('Meta Image')
+                ->image()
+                ->directory('meta-images') // optional: uploads to storage/app/meta-images
+                ->nullable(),
+
             Forms\Components\DatePicker::make('published_on')
                 ->label('Publish Date')
                 ->required(),

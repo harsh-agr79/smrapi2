@@ -28,6 +28,11 @@ class TermResource extends Resource
             ->schema([
                     Forms\Components\TextInput::make( 'meta_title' )->label( 'Meta Title' ),
                     Forms\Components\Textarea::make( 'meta_description' )->label( 'Meta Description' ),
+                     Forms\Components\FileUpload::make('meta_image')
+                ->label('Meta Image')
+                ->image()
+                ->directory('meta-images') // optional: uploads to storage/app/meta-images
+                ->nullable(),
                 Forms\Components\RichEditor::make('terms')
                 ->label('Terms and Conditions')
                 ->toolbarButtons([

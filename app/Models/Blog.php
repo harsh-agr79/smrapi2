@@ -17,6 +17,7 @@ class Blog extends Model
         'content',
         'meta_title',
         'meta_description',
+        'meta_image',
         'pinned',
         'slug'
     ];

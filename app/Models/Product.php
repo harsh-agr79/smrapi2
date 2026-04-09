@@ -12,6 +12,7 @@ class Product extends Model
     protected $fillable = [
         'meta_title',
         'meta_description',
+        'meta_image',
         'name',
         'brand_id',
         'brand',

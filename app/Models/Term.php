@@ -12,6 +12,7 @@ class Term extends Model
     protected $fillable = [
         'meta_title',
         'meta_description',
+        'meta_image',
         'terms'
     ];
 }
