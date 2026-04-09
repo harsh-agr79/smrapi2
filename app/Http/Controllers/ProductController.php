@@ -220,7 +220,7 @@ class ProductController extends Controller
         }
     
         // Check if the product is in the user's wishlist
-        $product->wishlist = in_array($id, $wishlistProductIds);
+        $product->wishlist = in_array($product->id, $wishlistProductIds);
     
         // Handle product images
         $images = json_decode($product->images, true);
@@ -257,7 +257,7 @@ class ProductController extends Controller
             ->leftJoin('users', 'product_reviews.user_id', '=', 'users.id')
             ->select('product_reviews.*', 'users.name as user_name')
             ->orderBy('product_reviews.created_at', 'DESC')
-            ->where('product_reviews.product_id', $id)
+            ->where('product_reviews.product_id', $product->id)
             ->get();
     
         // Retrieve authenticated user's wishlist
@@ -273,7 +273,7 @@ class ProductController extends Controller
         }
     
         // Check if the product is in the user's wishlist
-        $product->wishlist = in_array($id, $wishlistProductIds);
+        $product->wishlist = in_array($product->id, $wishlistProductIds);
     
         // Handle product images
         $images = json_decode($product->images, true);
