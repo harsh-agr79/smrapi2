@@ -94,9 +94,6 @@ class FrontController extends Controller
             return response()->json(['error' => 'Meta tag not found'], 404);
         }
 
-        return response()->json([
-            'meta_title' => $metaTag->meta_title,
-            'meta_description' => $metaTag->meta_description,
-        ], 200);
+        return response()->json($metaTag, 200);
     }
 }
