@@ -26,6 +26,7 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\FAQController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\EmiApplicationController;
+use App\Http\Controllers\ContactMessageController;
 
 // routes/api.php
 
