@@ -76,6 +76,12 @@ Route::group(['middleware'=>'api_key'], function () {
 
     Route::post('/emi-application', [EmiApplicationController::class, 'store']);
 
+    Route::get('/about', [FrontController::class, 'getAbout']); //done
+
+    Route::get('/contact', [FrontController::class, 'getContactInfo']); //done
+
+    Route::post('/contact', [ContactMessageController::class, 'store']); //done
+
     Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail'])
     ->middleware(['auth:sanctum', 'throttle:6,1'])
     ->name('verification.resend');

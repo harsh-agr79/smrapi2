@@ -96,4 +96,26 @@ class FrontController extends Controller
 
         return response()->json($metaTag, 200);
     }
+
+    public function getAbout()
+    {
+        $about = DB::table('abouts')->first();
+
+        if (!$about) {
+            return response()->json(['error' => 'About information not found'], 404);
+        }
+
+        return response()->json($about, 200);
+    }
+
+    public function getContactInfo()
+    {
+        $contactInfo = DB::table('contact_pages')->first();
+
+        if (!$contactInfo) {
+            return response()->json(['error' => 'Contact information not found'], 404);
+        }
+
+        return response()->json($contactInfo, 200);
+    }
 }
