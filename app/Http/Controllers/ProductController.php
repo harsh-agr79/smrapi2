@@ -94,6 +94,8 @@ class ProductController extends Controller
             'slug' => $product->slug,
             'price' => $product->price,
             'offer' => $product->offer,
+            'brand_id' => $product->brand_id,
+            'category_id' => $product->category_id,
             'images' => is_array($product->images) ? implode('|', $product->images) : $product->images,
             'category' => $product->category ? $product->category->category : null,
             'brand' => $product->brand ? $product->brand->name : null,
