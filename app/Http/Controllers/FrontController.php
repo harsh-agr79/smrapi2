@@ -112,7 +112,7 @@ class FrontController extends Controller
 
     public function getContactInfo()
     {
-        $contactInfo = Contact::first();
+        $contactInfo = ContactPage::first();
 
         if (!$contactInfo) {
             return response()->json(['error' => 'Contact information not found'], 404);
