@@ -110,8 +110,8 @@ class ProductController extends Controller
     private function formatDetailProduct(Product $product, array $wishlistProductIds)
     {
         $data = $product->toArray();
-        $data['category'] = $product->category ? $product->category->category : null;
-        $data['brand'] = $product->brand ? $product->brand->name : null;
+        // $data['category'] = $product->category ? $product->category->category : null;
+        // $data['brand'] = $product->brand ? $product->brand->name : null;
         $data['wishlist'] = in_array($product->id, $wishlistProductIds);
         $data['images'] = is_array($product->images) ? implode('|', $product->images) : $product->images;
 
