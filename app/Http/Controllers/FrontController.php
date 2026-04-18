@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use App\Models\MetaTag;
+use App\Models\ContactPage;
+use App\Models\About;
 
 class FrontController extends Controller
 {
@@ -99,7 +101,7 @@ class FrontController extends Controller
 
     public function getAbout()
     {
-        $about = DB::table('abouts')->first();
+        $about = About::first();
 
         if (!$about) {
             return response()->json(['error' => 'About information not found'], 404);
@@ -110,7 +112,7 @@ class FrontController extends Controller
 
     public function getContactInfo()
     {
-        $contactInfo = DB::table('contact_pages')->first();
+        $contactInfo = Contact::first();
 
         if (!$contactInfo) {
             return response()->json(['error' => 'Contact information not found'], 404);
