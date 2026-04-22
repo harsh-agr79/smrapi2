@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 
+
+use App\Models\Order;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -16,3 +18,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('/admin');
 });
+
+Route::get('/orders/{order}/print-invoice', function (Order $order) {
+    // Eager load relationships to prevent N+1 queries
+    $order->load(['customer', 'OrderItem.product', 'store']);
+    
+    return view('invoices.print', compact('order'));
+})->name('order.invoice.print')->middleware(['web', 'auth']);
