@@ -1,35 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Invoice #{{ $order->id }}</title>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; font-size: 14px; }
-        .invoice-box { width: 100%; padding: 20px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .details-table, .items-table { width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 20px; }
-        .items-table th, .items-table td { padding: 10px; border-bottom: 1px solid #ddd; }
-        .items-table th { background: #f9f9f9; }
-        .totals-table { width: 100%; border-collapse: collapse; }
-        .totals-table td { padding: 5px; text-align: right; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .invoice-box {
+            width: 100%;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .details-table,
+        .items-table {
+            width: 100%;
+            text-align: left;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .items-table th,
+        .items-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .items-table th {
+            background: #f9f9f9;
+        }
+
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .totals-table td {
+            padding: 5px;
+            text-align: right;
+        }
     </style>
 </head>
+
 <body>
     <div class="invoice-box">
         <div class="header">
             @php
                 // 1. Define the path to your image
-                $imagePath = public_path('logo/smrlogo.png'); 
-                
+                $imagePath = public_path('logo/smrlogo.png');
+
                 // 2. Read the file and convert it to Base64
                 $imageData = base64_encode(file_get_contents($imagePath));
-                
+
                 // 3. Format it for the HTML src attribute
                 $src = 'data:image/png;base64,' . $imageData;
             @endphp
 
             <img src="{{ $src }}" alt="Company Logo" style="max-width: 200px; margin-bottom: 10px;">
-            <p>Order Date: {{ \Carbon\Carbon::parse($order->order_date)->format('d M, Y') }} | Order ID: #{{ $order->id }}</p>
+            <p>Order Date: {{ \Carbon\Carbon::parse($order->order_date)->format('d M, Y') }} | Order ID:
+                #{{ $order->id }}</p>
         </div>
 
         <table class="details-table">
@@ -38,7 +76,7 @@
                     <strong>Billed To:</strong><br>
                     {{ $order->customer->name ?? 'Guest' }}<br>
                     {{ $order->customer->email ?? '' }}<br>
-                    @if(is_array($order->billing_address))
+                    @if (is_array($order->billing_address))
                         {{ $order->billing_address['street'] ?? '' }}<br>
                         {{ $order->billing_address['city'] ?? '' }}, {{ $order->billing_address['zip'] ?? '' }}
                     @endif
@@ -60,12 +98,16 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($order->OrderItem as $item)
+                @foreach ($order->OrderItem as $item)
                     <tr>
                         <td>
                             {{ $item->product->name ?? 'Unknown Product' }}
-                            @if(!empty($item->variation))
-                                <br><small style="color: #666;">{{ implode(', ', $item->variation) }}</small>
+
+                            @if (!empty($item->variation) && is_array($item->variation))
+                                <br>
+                                <small style="color: #666;">
+                                    {!! collect($item->variation)->filter(fn($value) => !empty($value))->map(fn($value, $key) => ucwords(str_replace('_', ' ', $key)) . ': ' . $value)->implode('<br>') !!}
+                                </small>
                             @endif
                         </td>
                         <td>{{ $item->quantity }}</td>
@@ -90,10 +132,15 @@
                 <td>+${{ number_format($order->delivery_charge, 2) }}</td>
             </tr>
             <tr>
-                <td><h3><strong>Net Total:</strong></h3></td>
-                <td><h3>${{ number_format($order->net_total, 2) }}</h3></td>
+                <td>
+                    <h3><strong>Net Total:</strong></h3>
+                </td>
+                <td>
+                    <h3>${{ number_format($order->net_total, 2) }}</h3>
+                </td>
             </tr>
         </table>
     </div>
 </body>
+
 </html>
