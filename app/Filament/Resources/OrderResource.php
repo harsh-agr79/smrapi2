@@ -200,8 +200,8 @@ class OrderResource extends Resource
                 ], layout: FiltersLayout::AboveContentCollapsible)
             ->filtersFormColumns(3)
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                // Tables\Actions\EditAction::make(),
+                // Tables\Actions\DeleteAction::make(),
                 Action::make('download_invoice')
                     ->label('Download Invoice')
                     ->icon('heroicon-o-arrow-down-tray')
