@@ -28,4 +28,14 @@ class ReviewController extends Controller
 
         return response()->json(['message' => 'Review submitted successfully', 'review' => $review], 201);
     }
+
+    public function getMyReviews(Request $request){
+        $user = $request->user();
+
+        $reviews = ProductReview::where('user_id', $user->id)
+            ->with(['product:id,name,slug,price,images,category,brand,stock'])
+            ->get();
+
+        return response()->json($reviews, 200);
+    }
 }
