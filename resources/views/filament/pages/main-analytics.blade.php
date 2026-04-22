@@ -290,8 +290,7 @@
                                                 </a>
                                             </td>
                                             <td class="px-4 py-2 text-left">{{ $product['quantity'] }}</td>
-                                            <td class="px-4 py-2 text-right">
-                                                {{ indian_number_format($product['sales']) }}
+                                            <td class="px-4 py-2 text-right">{{ indian_number_format($product['sales']) }}
                                             </td>
                                         </tr>
                                     @endforeach
@@ -411,6 +410,158 @@
 
         window.addEventListener('context-updated', (e) => {
             window.__AI_PAGE_CONTEXT__ = e.detail.context;
+        });
+    </script>
+
+    <script>
+        function makeTableSortable() {
+            const tables = document.querySelectorAll("table");
+
+            tables.forEach((table) => {
+                const headers = table.querySelectorAll("thead th");
+                const tbody = table.querySelector("tbody");
+
+                if (!tbody) return;
+
+                let sortDirection = 1;
+                let activeColumnIndex = -1;
+
+                headers.forEach((header, index) => {
+                    const newHeader = header.cloneNode(true);
+                    header.replaceWith(newHeader);
+
+                    newHeader.style.cursor = "pointer";
+
+                    newHeader.addEventListener("click", () => {
+                        if (activeColumnIndex === index) {
+                            sortDirection *= -1;
+                        } else {
+                            sortDirection = 1;
+                            activeColumnIndex = index;
+                        }
+
+                        const rows = Array.from(tbody.querySelectorAll("tr"));
+
+                        rows.sort((a, b) => {
+                            const aText = a.children[index].textContent.trim();
+                            const bText = b.children[index].textContent.trim();
+
+                            const aNum = parseFloat(aText.replace(/[^0-9.-]/g, ''));
+                            const bNum = parseFloat(bText.replace(/[^0-9.-]/g, ''));
+
+                            const isNumeric = !isNaN(aNum) && !isNaN(bNum);
+
+                            return isNumeric ?
+                                (aNum - bNum) * sortDirection :
+                                aText.localeCompare(bText) * sortDirection;
+                        });
+
+                        tbody.innerHTML = "";
+                        rows.forEach(row => tbody.appendChild(row));
+                    });
+                });
+            });
+        }
+
+        // Initial run
+        makeTableSortable();
+
+        // Re-run every 4 seconds
+        setInterval(makeTableSortable, 4000);
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const accordion = document.getElementById('accordion');
+
+            // helper: get unique category ids from DOM
+            const catNodes = Array.from(accordion.querySelectorAll('[data-category-id]'));
+            const catIds = catNodes.map(n => n.dataset.categoryId);
+
+            function updateCategory(catId) {
+                const container = accordion.querySelector('[data-category-id="' + catId + '"]');
+                if (!container) return;
+
+                // get checked sub ids
+                const selected = Array.from(container.querySelectorAll('input[data-sub-checkbox]:checked'))
+                    .map(i => i.dataset.subId);
+
+                const mustInclude = !!container.querySelector('input[data-must-include][data-cat-id="' + catId +
+                        '"]') &&
+                    container.querySelector('input[data-must-include][data-cat-id="' + catId + '"]').checked;
+
+                const showHidden = !!container.querySelector('input[data-show-hidden][data-cat-id="' + catId +
+                    '"]') &&
+                    container.querySelector('input[data-show-hidden][data-cat-id="' + catId + '"]').checked;
+
+                const rows = Array.from(container.querySelectorAll('tbody tr[data-cat-id]'));
+                let anyVisible = false;
+
+                rows.forEach(row => {
+                    const hidden = row.dataset.hidden === '1';
+                    const subids = (row.dataset.subids || '').split(',').filter(Boolean);
+
+                    // hide if hidden product and showHidden is false
+                    if (hidden && !showHidden) {
+                        row.style.display = 'none';
+                        return;
+                    }
+
+                    // if no sub filters selected => show
+                    if (selected.length === 0) {
+                        row.style.display = '';
+                        anyVisible = true;
+                        return;
+                    }
+
+                    // compute intersection
+                    const intersect = selected.filter(s => subids.includes(String(s)));
+                    const passes = mustInclude ? (intersect.length === selected.length) : (intersect
+                        .length > 0);
+
+                    if (passes) {
+                        row.style.display = '';
+                        anyVisible = true;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // show/hide the "no-products-match" placeholder if present
+                const placeholder = container.querySelector('tbody .no-products-match');
+                if (placeholder) {
+                    placeholder.style.display = anyVisible ? 'none' : '';
+                }
+            }
+
+            // initial apply for all categories
+            catIds.forEach(updateCategory);
+
+            // delegate change events for checkboxes inside accordion
+            accordion.addEventListener('change', function(e) {
+                const target = e.target;
+                if (!target) return;
+
+                // figure out category id from data-cat-id or parent
+                const catId = target.dataset.catId || (target.closest('[data-category-id]') && target
+                    .closest('[data-category-id]').dataset.categoryId);
+                if (!catId) return;
+
+                updateCategory(catId);
+            });
+
+            // also re-run when accordion opens (in case initial state changes)
+            // observe DOM for x-show changes — simple approach: re-evaluate when any button is clicked
+            accordion.addEventListener('click', function(e) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                // find its category container
+                const catContainer = btn.closest('[data-category-id]');
+                if (catContainer) {
+                    const catId = catContainer.dataset.categoryId;
+                    // slight delay to allow Alpine to toggle x-show
+                    setTimeout(() => updateCategory(catId), 50);
+                }
+            });
         });
     </script>
 
