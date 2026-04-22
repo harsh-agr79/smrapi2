@@ -48,6 +48,8 @@ class UserResource extends Resource {
     public static function table( Table $table ): Table {
         return $table
         ->columns( [
+            Tables\Columns\ImageColumn::make( 'dp' )
+            ->label( 'DP' ),
             Tables\Columns\TextColumn::make( 'id' )
             ->label( 'ID' )
             ->sortable(),

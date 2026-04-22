@@ -185,5 +185,55 @@ class AuthController extends Controller {
         } else {
             return response()->json('Error', 406);
         }
-    }    
+    }
+    
+
+    public function editProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|max:255',
+            'old_password' => 'sometimes|required_with:new_password',
+            'new_password' => 'sometimes|required_with:old_password|string|min:6|confirmed',
+            'dp' => 'sometimes|nullable|image|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        // Update name
+        if ($request->has('name')) {
+            $user->name = $request->name;
+        }
+
+        // Update password (only if both old & new provided)
+        if ($request->filled('old_password') && $request->filled('new_password')) {
+
+            // Check old password
+            if (!Hash::check($request->old_password, $user->password)) {
+                return response()->json([
+                    'message' => 'Old password is incorrect'
+                ], 400);
+            }
+
+            // Set new password
+            $user->password = Hash::make($request->new_password);
+        }
+
+        // Update profile picture
+        if ($request->hasFile('dp')) {
+            $path = $request->file('dp')->store('profile_pictures', 'public');
+            $user->dp = $path;
+        }
+
+        $user->save();
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user
+        ], 200);
+    }
+
 }

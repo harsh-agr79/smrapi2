@@ -114,6 +114,7 @@ Route::group(['middleware'=>'api_key'], function () {
         Route::put('/billing-address/default/{index}', [BillingAddressController::class, 'switchDefaultBillingAddress']); //done
 
         Route::get('/myreviews', [ReviewController::class, 'getMyReviews']);
+        Route::post('/profile/edit', [AuthController::class, 'editProfile']); //done
 
         Route::post('/orders/checkout', [OrderController::class, 'checkout']); //done
         Route::post('/orders/payment-success', [OrderController::class, 'handlePaymentSuccess']);
