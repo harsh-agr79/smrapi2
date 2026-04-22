@@ -12,6 +12,7 @@ class Dashboard extends BaseDashboard
         // custom analytics widgets from cluttering the main dashboard!
         return [
             \App\Filament\Widgets\ProductAnalyticsStats::class,
+            \App\Filament\Widgets\LatestOrders::class,
             \App\Filament\Widgets\DailySalesTable::class,
             \App\Filament\Widgets\CategoryRevenueChart::class,
             \App\Filament\Widgets\BrandPerformanceTable::class,
