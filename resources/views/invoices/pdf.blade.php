@@ -111,8 +111,8 @@
                             @endif
                         </td>
                         <td>{{ $item->quantity }}</td>
-                        <td>${{ number_format($item->discounted_price ?? $item->price, 2) }}</td>
-                        <td>${{ number_format(($item->discounted_price ?? $item->price) * $item->quantity, 2) }}</td>
+                        <td>Rs. { number_format($item->discounted_price ?? $item->price, 2) }}</td>
+                        <td>Rs. { number_format(($item->discounted_price ?? $item->price) * $item->quantity, 2) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -121,22 +121,22 @@
         <table class="totals-table">
             <tr>
                 <td><strong>Subtotal:</strong></td>
-                <td style="width: 120px;">${{ number_format($order->total_amount, 2) }}</td>
+                <td style="width: 120px;">Rs. { number_format($order->total_amount, 2) }}</td>
             </tr>
             <tr>
                 <td><strong>Discount:</strong></td>
-                <td>-${{ number_format($order->discount, 2) }}</td>
+                <td>-Rs. { number_format($order->discount, 2) }}</td>
             </tr>
             <tr>
                 <td><strong>Delivery Charge:</strong></td>
-                <td>+${{ number_format($order->delivery_charge, 2) }}</td>
+                <td>+Rs. { number_format($order->delivery_charge, 2) }}</td>
             </tr>
             <tr>
                 <td>
                     <h3><strong>Net Total:</strong></h3>
                 </td>
                 <td>
-                    <h3>${{ number_format($order->net_total, 2) }}</h3>
+                    <h3>Rs. { number_format($order->net_total, 2) }}</h3>
                 </td>
             </tr>
         </table>
