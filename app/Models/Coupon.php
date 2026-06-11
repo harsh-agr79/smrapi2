@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Exceptions\InvalidCouponException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -31,21 +32,34 @@ class Coupon extends Model
 
     public function isValidFor($customerId, $orderAmount): bool
     {
-        if (!$this->is_active)
-            return false;
-        if ($this->starts_at && now()->lt($this->starts_at))
-            return false;
-        if ($this->expires_at && now()->gt($this->expires_at))
-            return false;
-        if ($this->min_spend && $orderAmount < $this->min_spend)
-            return false;
-        if ($this->usage_limit && $this->used_count >= $this->usage_limit)
-            return false;
+        if (!$this->is_active) {
+            throw new InvalidCouponException('This coupon code is no longer active.');
+        }
+
+        if ($this->starts_at && now()->lt($this->starts_at)) {
+            throw new InvalidCouponException('This coupon promotion has not started yet.');
+        }
+
+        if ($this->expires_at && now()->gt($this->expires_at)) {
+            throw new InvalidCouponException('This coupon code has expired.');
+        }
+
+        if ($this->min_spend && $orderAmount < $this->min_spend) {
+            throw new InvalidCouponException("You must spend at least Rs. {$this->min_spend} to use this coupon.");
+        }
+
+        if ($this->usage_limit && $this->used_count >= $this->usage_limit) {
+            throw new InvalidCouponException('This coupon has reached its maximum global usage limit.');
+        }
 
         if ($this->usage_limit_per_user && $customerId) {
-            $userUsage = $this->orders()->where('customer_id', $customerId)->count();
-            if ($userUsage >= $this->usage_limit_per_user)
-                return false;
+            $userUsage = $this->orders()
+                ->where('coupon_order.customer_id', $customerId)
+                ->count();
+
+            if ($userUsage >= $this->usage_limit_per_user) {
+                throw new InvalidCouponException('You have already used this coupon code the maximum number of times.');
+            }
         }
 
         return true;

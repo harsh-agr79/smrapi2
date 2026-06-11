@@ -80,13 +80,28 @@ class OrderController extends Controller
         if ($request->filled('coupon_code')) {
             $coupon = Coupon::where('code', $request->coupon_code)->first();
 
-            // Check if coupon meets conditions (dates, active status, user constraints, minimum spend)
-            if (!$coupon || !$coupon->isValidFor($user->id, $discountedTotalBeforeCoupon)) {
-                return response()->json(['message' => 'The coupon code is invalid or conditions aren\'t met.'], 422);
+            // Check if it exists first
+            if (!$coupon) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'The coupon code entered is invalid.'
+                ], 422);
             }
 
-            // Calculate coupon discount (includes maximum cap limit for percentages internally)
-            $couponDiscount = $coupon->calculateDiscount($discountedTotalBeforeCoupon);
+            try {
+                // This will throw an exception if any rule fails
+                $coupon->isValidFor($user->id, $discountedTotalBeforeCoupon);
+
+                // If it passes, calculate the discount amount safely
+                $couponDiscount = $coupon->calculateDiscount($discountedTotalBeforeCoupon);
+
+            } catch (\App\Exceptions\InvalidCouponException $e) {
+                // Catch our custom exception and return the exact error message to the client
+                return response()->json([
+                    'status' => false,
+                    'message' => $e->getMessage()
+                ], 422);
+            }
         }
 
         $finalDiscount = $totalDiscount + $couponDiscount;
