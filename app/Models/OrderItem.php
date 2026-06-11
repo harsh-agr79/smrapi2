@@ -44,47 +44,54 @@ class OrderItem extends Model
         static::deleted(fn($item) => $item->updateOrderTotals());
     }
 
+    // Inside app/Models/OrderItem.php
+
     public function updateOrderTotals()
     {
-        $order = $this->order; // Get parent order
+        $order = $this->order;
         if (!$order)
             return;
 
+        // 1. Calculate base item totals from the cart items
         $totals = $order->OrderItem()
             ->selectRaw('
-                SUM(price * quantity) as total_amount,
-                SUM((price - discounted_price) * quantity) as item_discount,
-                SUM(discounted_price * quantity) as discounted_total
-            ')
+            SUM(price * quantity) as total_amount,
+            SUM((price - discounted_price) * quantity) as item_discount,
+            SUM(discounted_price * quantity) as discounted_total
+        ')
             ->first();
 
         $grossTotal = $totals->discounted_total ?? 0;
         $couponDiscount = 0;
 
-        foreach ($order->coupons as $coupon) {
-            // Double check validity against the new item totals
+        // 2. IMPORTANT: Loop through coupons attached to this order to keep them in sync
+        // If OrderItem creates are happening, $order->coupons might be empty in-memory.
+        // We load it fresh from the DB to be safe.
+        foreach ($order->coupons()->get() as $coupon) {
             if ($coupon->isValidFor($order->customer_id, $grossTotal)) {
                 $discount = $coupon->calculateDiscount($grossTotal);
                 $couponDiscount += $discount;
 
-                // Update pivot table record for accuracy
+                // Keep the pivot record updated with the exact split
                 $order->coupons()->updateExistingPivot($coupon->id, ['discount_amount' => $discount]);
             } else {
-                // Detach if it's no longer valid due to item removal/quantity drop
+                // Remove the coupon if item changes mean they no longer meet requirements
                 $order->coupons()->detach($coupon->id);
             }
         }
 
-        $deliveryCharge = $order->delivery_charge ?? 0; // Get delivery charge from the order
+        $deliveryCharge = $order->delivery_charge ?? 0;
         $totalItemDiscount = $totals->item_discount ?? 0;
 
+        // Combine product markdown discounts + our coupon reductions
         $combinedDiscount = $totalItemDiscount + $couponDiscount;
 
+        // 3. Update the main order row with the final calculation
         $order->update([
             'total_amount' => $totals->total_amount ?? 0,
             'discount' => $combinedDiscount,
             'discounted_total' => $grossTotal - $couponDiscount,
-            'net_total' => max(0, ($grossTotal - $couponDiscount) + $deliveryCharge), // Add delivery charge
+            'net_total' => max(0, ($grossTotal - $couponDiscount) + $deliveryCharge),
         ]);
     }
 }
