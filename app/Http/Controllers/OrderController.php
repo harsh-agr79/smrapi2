@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\InvalidCouponException;
 use App\Models\Coupon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -195,6 +196,61 @@ class OrderController extends Controller
             ], 500);
         }
 
+    }
+
+    public function validateCoupon(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'coupon_code' => 'required|string|exists:coupons,code',
+        ]);
+
+        $cart = $user->cart ?? [];
+        if (is_string($cart)) {
+            $cart = json_decode($cart, true);
+        }
+
+        if (empty($cart)) {
+            return response()->json(['message' => 'Your cart is empty.'], 400);
+        }
+
+        // Calculate current cart subtotal
+        $discountedTotalBeforeCoupon = 0;
+        foreach ($cart as $item) {
+            $product = Product::find($item['product_id']);
+            if (!$product)
+                continue;
+
+            $price = $product->price;
+            $discountedPrice = $product->offer ?? $price;
+            $discountedTotalBeforeCoupon += ($discountedPrice * $item['quantity']);
+        }
+
+        $coupon = Coupon::where('code', $request->coupon_code)->first();
+
+        try {
+            // Run our standard validation logic (dates, min_spend, usage limits)
+            $coupon->isValidFor($user->id, $discountedTotalBeforeCoupon);
+
+            // Calculate exact discount amount (caps percentage coupons automatically)
+            $discountAmount = $coupon->calculateDiscount($discountedTotalBeforeCoupon);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Coupon applied successfully!',
+                'coupon_code' => $coupon->code,
+                'discount_amount' => $discountAmount,
+                'type' => $coupon->type,
+                'value' => $coupon->value
+            ], 200);
+
+        } catch (InvalidCouponException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
     }
 
     public function deletePendingOrderOnFailure(Request $request)
