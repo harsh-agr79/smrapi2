@@ -146,7 +146,7 @@ class OrderController extends Controller
                 ]);
 
                 // Increment coupon global counters
-                $coupon->increment('used_count');
+                // $coupon->increment('used_count');
             }
             // Add order items
             foreach ($cart as $cartItem) {
@@ -163,6 +163,10 @@ class OrderController extends Controller
                     'price' => $product->price,
                     'discounted_price' => $product->offer ?? $product->price,
                 ]);
+            }
+
+            if ($coupon) {
+                $coupon->increment('used_count');
             }
 
 
