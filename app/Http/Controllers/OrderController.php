@@ -229,6 +229,15 @@ class OrderController extends Controller
 
         $coupon = Coupon::where('code', $request->coupon_code)->first();
 
+        if (!$coupon) {
+            return response()->json([
+                'status' => false,
+                'message' => 'The coupon code entered does not exist.'
+            ], 422);
+        }
+
+        $coupon->refresh();
+
         try {
             // Run our standard validation logic (dates, min_spend, usage limits)
             $coupon->isValidFor($user->id, $discountedTotalBeforeCoupon);
