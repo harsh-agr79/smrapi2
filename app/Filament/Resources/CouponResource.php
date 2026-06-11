@@ -1,0 +1,218 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\CouponResource\Pages;
+use App\Filament\Resources\CouponResource\RelationManagers;
+use App\Models\Coupon;
+use Filament\Forms;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+class CouponResource extends Resource
+{
+    protected static ?string $model = Coupon::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-ticket';
+
+    protected static ?string $navigationGroup = 'Orders';
+
+    protected static ?int $navigationSort = 2;
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Grid::make(3)
+                    ->schema([
+                        // Main Configuration Block
+                        Section::make('Coupon Core Details')
+                            ->schema([
+                                Forms\Components\TextInput::make('code')
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->regex('/^[A-Z0-9]+$/i') // Enforces alphanumeric values only
+                                    ->validationMessages([
+                                        'regex' => 'The coupon code may only contain letters and numbers.',
+                                    ])
+                                    ->extraInputAttributes(['style' => 'text-transform: uppercase;'])
+                                    ->dehydrateStateUsing(fn ($state) => strtoupper($state))
+                                    ->placeholder('E.G. SUMMER50')
+                                    ->hint('Alphanumeric codes only.'),
+
+                                Forms\Components\ToggleButtons::make('type')
+                                    ->options([
+                                        'fixed' => 'Fixed Amount (Rs.)',
+                                        'percentage' => 'Percentage (%)',
+                                    ])
+                                    ->required()
+                                    ->inline()
+                                    ->live() // Triggers re-render when changing value to toggle max_discount visibility
+                                    ->default('fixed'),
+
+                                Forms\Components\TextInput::make('value')
+                                    ->required()
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->label('Discount Value'),
+                            ])
+                            ->columnSpan(2),
+
+                        // Status & Toggle Settings
+                        Section::make('Status')
+                            ->schema([
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label('Is Active')
+                                    ->default(true)
+                                    ->onColor('success')
+                                    ->offColor('danger'),
+
+                                Forms\Components\Placeholder::make('used_count')
+                                    ->label('Total Times Used So Far')
+                                    ->content(fn(?Coupon $record): string => $record ? (string) $record->used_count : '0'),
+                            ])
+                            ->columnSpan(1),
+                    ]),
+
+                // Restrictions and Threshold Limits Block
+                Section::make('Usage Constraints & Thresholds')
+                    ->description('Set minimum rules or discount caps for this coupon.')
+                    ->schema([
+                        Forms\Components\TextInput::make('min_spend')
+                            ->label('Minimum Spend Requirement (Rs.)')
+                            ->numeric()
+                            ->prefix('Rs.')
+                            ->placeholder('No Minimum')
+                            ->minValue(0),
+
+                        Forms\Components\TextInput::make('max_discount')
+                            ->label('Maximum Allowed Discount Cap (Rs.)')
+                            ->numeric()
+                            ->prefix('Rs.')
+                            ->placeholder('No Cap')
+                            ->minValue(0)
+                            // Hidden dynamically using Filament Livewire state features if type isn't percentage
+                            ->visible(fn(Get $get): bool => $get('type') === 'percentage')
+                            ->hint('Caps the maximum payout generated by percentage discounts.'),
+                    ])->columns(2),
+
+                // Control Configurations Block
+                Section::make('Usage Limits & Validity Window')
+                    ->schema([
+                        Forms\Components\TextInput::make('usage_limit')
+                            ->label('Global Usage Limit')
+                            ->numeric()
+                            ->placeholder('Infinite')
+                            ->hint('Total times this coupon can be claimed globally.'),
+
+                        Forms\Components\TextInput::make('usage_limit_per_user')
+                            ->label('Usage Limit Per Customer')
+                            ->numeric()
+                            ->placeholder('No Limit')
+                            ->default(1)
+                            ->hint('How many times a single user profile can check out with this.'),
+
+                        Forms\Components\DateTimePicker::make('starts_at')
+                            ->label('Starts Active From')
+                            ->native(false),
+
+                        Forms\Components\DateTimePicker::make('expires_at')
+                            ->label('Expires At')
+                            ->native(false)
+                            ->after('starts_at'),
+                    ])->columns(2),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('code')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold')
+                    ->copyable(), // Allows admins to quickly click to copy the coupon string
+
+                Tables\Columns\TextColumn::make('type')
+                    ->badge()
+                    ->color(fn(string $state): string => $state === 'percentage' ? 'warning' : 'success')
+                    ->formatStateUsing(fn(string $state): string => ucfirst($state)),
+
+                Tables\Columns\TextColumn::make('value')
+                    ->label('Discount')
+                    ->sortable()
+                    ->formatStateUsing(fn($record) => $record->type === 'percentage' ? "{$record->value}%" : "Rs. {$record->value}"),
+
+                Tables\Columns\TextColumn::make('min_spend')
+                    ->label('Min Spend')
+                    ->money('NPR', divideBy: 1) // Formats as currency (Rs./₹)
+                    ->placeholder('None'),
+
+                Tables\Columns\TextColumn::make('max_discount')
+                    ->label('Max Cap')
+                    ->money('NPR', divideBy: 1)
+                    ->placeholder('No Cap'),
+
+                Tables\Columns\TextColumn::make('used_count')
+                    ->label('Usage')
+                    ->sortable()
+                    ->formatStateUsing(fn($record) => "{$record->used_count} " . ($record->usage_limit ? "/ {$record->usage_limit}" : '(Global)')),
+
+                Tables\Columns\IconColumn::make('is_active')
+                    ->boolean()
+                    ->sortable()
+                    ->label('Active status'),
+
+                Tables\Columns\TextColumn::make('expires_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->placeholder('Never Expires')
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                TernaryFilter::make('is_active')
+                    ->label('Active Status')
+                    ->placeholder('All Coupons')
+                    ->trueLabel('Active Only')
+                    ->falseLabel('Inactive Only'),
+                Tables\Filters\Filter::make('expired')
+                    ->query(fn($query) => $query->where('expires_at', '<', now())),
+                TrashedFilter::make()
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListCoupons::route('/'),
+            'create' => Pages\CreateCoupon::route('/create'),
+            'edit' => Pages\EditCoupon::route('/{record}/edit'),
+        ];
+    }
+}

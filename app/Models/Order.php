@@ -10,10 +10,18 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-        'customer_id', 'order_date', 'billing_address',
-        'payment_status', 'current_status',
-        'total_amount', 'delivery_charge', 'discount', 'discounted_total', 
-        'net_total', 'last_status_updated', 'store_id'
+        'customer_id',
+        'order_date',
+        'billing_address',
+        'payment_status',
+        'current_status',
+        'total_amount',
+        'delivery_charge',
+        'discount',
+        'discounted_total',
+        'net_total',
+        'last_status_updated',
+        'store_id'
     ];
 
     protected $casts = [
@@ -27,17 +35,17 @@ class Order extends Model
         static::updating(function ($order) {
             if ($order->isDirty('current_status')) { // Check if status has changed
                 OrderStatusHistory::create([
-                    'order_id'   => $order->id,
-                    'status'     => $order->current_status,
+                    'order_id' => $order->id,
+                    'status' => $order->current_status,
                     'changed_at' => now(),
-                    'user_id'    => auth()->id() ?? null, // If authenticated, store user ID
+                    'user_id' => auth()->id() ?? null, // If authenticated, store user ID
                 ]);
-                
+
                 if ($order->customer && $order->customer->email) {
                     // Mail::to($order->customer->email)->send(new OrderStatusUpdated($order));
                 }
             }
-           
+
         });
     }
 
@@ -65,5 +73,10 @@ class Order extends Model
     public function statusHistory()
     {
         return $this->hasMany(OrderStatusHistory::class);
+    }
+
+    public function coupons()
+    {
+        return $this->belongsToMany(Coupon::class)->withPivot('discount_amount')->withTimestamps();
     }
 }
