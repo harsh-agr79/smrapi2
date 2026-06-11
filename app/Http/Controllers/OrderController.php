@@ -123,7 +123,7 @@ class OrderController extends Controller
 
         try {
             // Create a new order
-            $order = Order::create(array_merge([
+            $order = Order::create([
                 'customer_id' => $user->id,
                 'order_date' => now(),
                 'current_status' => 'pending',
@@ -135,8 +135,19 @@ class OrderController extends Controller
                 'payment_status' => $pstat,
                 'last_status_updated' => now(),
                 'billing_address' => json_encode($billingAddress),
-            ]));
+            ]);
 
+            if ($coupon) {
+                $order->coupons()->attach($coupon->id, [
+                    'customer_id' => $user->id,
+                    'discount_amount' => $couponDiscount,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                // Increment coupon global counters
+                $coupon->increment('used_count');
+            }
             // Add order items
             foreach ($cart as $cartItem) {
                 $product = Product::find($cartItem['product_id']);
@@ -154,17 +165,6 @@ class OrderController extends Controller
                 ]);
             }
 
-            if ($coupon) {
-                $order->coupons()->attach($coupon->id, [
-                    'customer_id' => $user->id,
-                    'discount_amount' => $couponDiscount,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                // Increment coupon global counters
-                $coupon->increment('used_count');
-            }
 
             // Record initial order status
             OrderStatusHistory::create([
