@@ -122,6 +122,7 @@ Route::group(['middleware'=>'api_key'], function () {
 
         Route::get('/orders', [OrderController::class, 'getOrders']);
         Route::get('/orders/{orderId}', [OrderController::class, 'getOrderDetails']);
+        Route::post('/coupons/validate', [OrderController::class, 'validateCoupon']);
 
         Route::get('/provinces', [FrontController::class, 'getProvinces']); //done
         Route::post('/districts', [FrontController::class, 'getDistrictsByProvince']); //done
