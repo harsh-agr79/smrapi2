@@ -11,32 +11,51 @@ class EmiApplication extends Model
 
     protected $fillable = [
         'product_id',
-        
+
         // Applicant Information
-        'applicant_citizenship_front',
-        'applicant_citizenship_back',
-        'applicant_father_name',
-        'applicant_mother_name',
-        'applicant_grandfather_name',
-        'applicant_wife_name',
-        'applicant_current_location',
+        'applicant_full_name',
+        'applicant_permanent_address',
+        'applicant_current_address',
         'applicant_phone_number',
         'applicant_email',
+        'applicant_grandfather_name',
+        'applicant_father_name',
+        'applicant_mother_name',
+        'applicant_wife_name',
+        'applicant_occupation',
+        'applicant_occupation_office_name',
+        'applicant_occupation_office_address',
+        'applicant_citizenship_front',
+        'applicant_citizenship_back',
+        'applicant_live_photo',
+        'applicant_phone_verification',
         'applicant_relation_with_guarantor',
         'applicant_source_of_income',
 
         // Guarantor Information
-        'guarantor_citizenship_front',
-        'guarantor_citizenship_back',
-        'guarantor_father_name',
-        'guarantor_mother_name',
-        'guarantor_grandfather_name',
-        'guarantor_wife_name',
-        'guarantor_current_location',
+        'guarantor_full_name',
+        'guarantor_permanent_address',
+        'guarantor_current_address',
         'guarantor_phone_number',
         'guarantor_email',
+        'guarantor_grandfather_name',
+        'guarantor_father_name',
+        'guarantor_mother_name',
+        'guarantor_wife_name',
+        'guarantor_occupation',
+        'guarantor_occupation_office_name',
+        'guarantor_occupation_office_address',
+        'guarantor_citizenship_front',
+        'guarantor_citizenship_back',
+        'guarantor_live_photo',
+        'guarantor_phone_verification',
         'guarantor_relation',
         'guarantor_source_of_income',
+
+        // Reference Information
+        'reference_full_name',
+        'reference_address',
+        'reference_phone_number',
     ];
 
     /**
