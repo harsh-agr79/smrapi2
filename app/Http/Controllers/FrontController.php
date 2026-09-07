@@ -41,9 +41,10 @@ class FrontController extends Controller
     {
         // Retrieve all data from the banners table
         $banners = DB::table('banners' )->get();
+        $discountBanners = DB::table('home_discount_banners')->first();
 
         // Return the data as a JSON response
-        return response()->json( $banners );
+        return response()->json(['banners' => $banners, 'discount_banners' => $discountBanners], 200);
     }
 
     public function getProvinces()
